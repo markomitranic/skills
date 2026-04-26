@@ -131,7 +131,7 @@ I suspect this is a false positive — `foo` is already null-checked at the call
 
 - Explain *why* it needs to be fixed in concrete terms — what breaks, what user-facing effect, what invariant is violated. Not just "the reviewer is right".
 - Give a short example if it helps make it tangible (e.g., *"if `userId` is undefined here, the API call returns 500 instead of redirecting to login"*).
-- The reader doesn't know the full context and can't see the code, so a small markdown/ascii illustration and a before/after, that explain how the parts fit into the layered architecture helps a lot.
+- The reader doesn't know the full context and can't see the code, so a small markdown/ascii illustration, diagram and a before/after, that explain how the parts fit into the layered architecture helps a lot.
 - Propose a 1–2 sentence fix summary — what you'd change, not the actual diff.
 - Stop and wait for user approval before editing.
 
