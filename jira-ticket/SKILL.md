@@ -19,9 +19,9 @@ When the user dumps raw context (a transcript, a meeting note, a Slack thread, a
 2. Initiate a team of agents to perform deeper research/planning, analyse their responses, and synthesize the information:
    - Sub-agent to use the Atlassian skills and MCP tools to look up relevant Confluence pages or Jira tickets that duplicate or relate to the request.
    - Sub-agent to access the codebase or documentation to understand technical constraints or terms.
+   - When results are in, analyse the problem from multiple angles and identify **information gaps** that would result in vague or incomplete ticket
 3. Ask the user clarifying questions until all gaps are filled and decisions are made. Use `AskUserQuestion` tool.
-   - Analyze the problem from multiple angles and identify **information gaps** that would result in vague or incomplete ticket
-   - Correct technical wording (uniform component or uniform composition)
+   - Correct technical wording (double check the verbs and technical terms)
    - Edge cases, error states or logical conflicts
    - Missing non-functional requirements (performance, security, accessibility)
    - Ambiguous scope boundaries
