@@ -5,12 +5,11 @@ description: Write a Jira ticket with a clear 3-part structure. Use this skill w
 
 # Jira ticket writing
 
-Summarize all the information, context, and decisions, so that developers can easily catch up and clearly understand what they need to do.
-Make sure to include all the information and not lose information or context.
+Summarize all the information, context, and decisions, so that developers can easily catch up and clearly understand what they need to do. Make sure to include all the information and not lose information or context.
 
 ## Workflow
 
-When the user dumps raw context (a transcript, a meeting note, a Slack thread, a spec), use the project manager personality to deeply understand the request:
+When the user dumps raw context (a transcript, a meeting note, a Slack thread, a spec) or the prior part of the current conversation, use the project manager personality to deeply understand the request:
 
 1. Research dependencies and understand the request:
    - The core objective (what is being built/fixed/changed)
@@ -18,7 +17,7 @@ When the user dumps raw context (a transcript, a meeting note, a Slack thread, a
    - Technical constraints and dependencies
    - Stakeholders or teams impacted
 2. Initiate a team of agents to perform deeper research:
-   - Sub-agent to use the Atlassian skills and MCP tools to look up relevant Jira projects, issue types, or existing tickets that might relate to the request.
+   - Sub-agent to use the Atlassian skills and MCP tools to look up relevant Confluence pages or Jira tickets that duplicate or relate to the request.
    - Sub-agent to access the codebase or documentation to understand technical constraints or terms.
 3. Ask the user clarifying questions until all gaps are filled and decisions are made.
    - Analyze the problem from multiple angles and identify **information gaps** that would result in vague or incomplete ticket
