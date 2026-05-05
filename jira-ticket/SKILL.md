@@ -16,10 +16,10 @@ When the user dumps raw context (a transcript, a meeting note, a Slack thread, a
    - Explicit requirements vs. implied requirements
    - Technical constraints and dependencies
    - Stakeholders or teams impacted
-2. Initiate a team of agents to perform deeper research:
+2. Initiate a team of agents to perform deeper research/planning, analyse their responses, and synthesize the information:
    - Sub-agent to use the Atlassian skills and MCP tools to look up relevant Confluence pages or Jira tickets that duplicate or relate to the request.
    - Sub-agent to access the codebase or documentation to understand technical constraints or terms.
-3. Ask the user clarifying questions until all gaps are filled and decisions are made.
+3. Ask the user clarifying questions until all gaps are filled and decisions are made. Use `AskUserQuestion` tool.
    - Analyze the problem from multiple angles and identify **information gaps** that would result in vague or incomplete ticket
    - Correct technical wording (uniform component or uniform composition)
    - Edge cases, error states or logical conflicts
@@ -27,15 +27,16 @@ When the user dumps raw context (a transcript, a meeting note, a Slack thread, a
    - Ambiguous scope boundaries
    - Unstated integration points (which services does this touch?)
    - Edge cases not covered (error handling, empty states, concurrent access)
-4. Print the ticket(s) on screen for the user to review and copy-paste into Jira.
-5. Offer some ideas for assets/images/screenshots they could attach to the ticket.
+4. !! Repeat steps 2 and 3, until there are no more unresolved questions. !!
+5. Print the ticket(s) on screen for the user to review and copy-paste into Jira.
+6. Offer some ideas for assets/images/screenshots they could attach to the ticket.
 
 ## Structure
 
 Every ticket has exactly three sections, in this order:
 
 1. **Why** — 2 sentences in a "note" block. Paint a picture of the scenario/goal of the ticket. Avoid generic value props and marketing language. Be specific.
-2. **Description** — plain language, succinct and information dense, using technical language. If there are any relevant Confluence documents, Figma designs, URLs of note or Jira ticket references, include them in the description.
+2. **Description** — succinct and information dense, in multiple short chapters/paragraphs, using technical language. If there are any relevant Confluence documents, Figma designs, URLs of note or Jira ticket references, include them in the description. Attach an ASCII diagram if it helps clarify the structure of a system or flow.
 3. **Acceptance criteria** — a testable list. Each item is something a human or test could verify.
    - A flat list without emoji
    - Each item starts with the system or actor: "The CMS field exists...", "The endpoint accepts...", "The frontend renders..."
