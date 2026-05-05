@@ -27,9 +27,10 @@ When the user dumps raw context (a transcript, a meeting note, a Slack thread, a
    - Ambiguous scope boundaries
    - Unstated integration points (which services does this touch?)
    - Edge cases not covered (error handling, empty states, concurrent access)
-4. !! Repeat steps 2 and 3, until there are no more unresolved questions. !!
-5. Print the ticket(s) on screen for the user to review and copy-paste into Jira.
-6. Offer some ideas for assets/images/screenshots they could attach to the ticket.
+4. Print the ticket(s) on screen for the user to review and copy-paste into Jira.
+5. Offer some ideas for assets/images/screenshots they could attach to the ticket.
+
+**Warning**: Never leave any unanswered questions - if there are unanswered questions, repeat steps 2 (analyse) and 3 (ask user) until all questions are answered! An incomplete ticket is worse than no ticket at all, because it creates false confidence and leads to wasted time and rework.
 
 ## Structure
 
