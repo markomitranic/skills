@@ -32,7 +32,13 @@ When the user dumps raw context (a transcript, a meeting note, a Slack thread, a
 4. Print the ticket(s) on screen for the user to review and copy-paste into Jira.
 5. Offer some ideas for assets/images/screenshots they could attach to the ticket.
 
-**Warning**: Never leave any unanswered questions - if there are unanswered questions, repeat steps 2 (analyse) and 3 (ask user) until all questions are answered! An incomplete ticket is worse than no ticket at all, because it creates false confidence and leads to wasted time and rework.
+### Interview (step 3)
+
+Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+
+Ask the questions one at a time.
+
+Never leave any unanswered questions - if there are unanswered questions, repeat the interview process until all questions are answered! An incomplete ticket is worse than no ticket at all, because it creates false confidence and leads to wasted time and rework.
 
 ## Structure
 
