@@ -45,7 +45,7 @@ Never leave any unanswered questions - if there are unanswered questions, repeat
 Every ticket has exactly three sections, in this order:
 
 1. **Why** — 2 sentences in a "note" block. Paint a picture of the scenario/goal of the ticket. Avoid generic value props and marketing language. Be specific.
-2. **Description** — succinct and information dense, in multiple short chapters/paragraphs, using technical language. If there are any relevant Confluence documents, Figma designs, URLs of note or Jira ticket references, include them in the description. Attach an ASCII diagram if it helps clarify the structure of a system or flow.
+2. **Description** — succinct and information dense, in multiple short chapters/paragraphs, using technical language. If there are any relevant Confluence documents, Figma designs, URLs of note or Jira ticket references, include them in the description. All links and jira ticket refs should be clickable. Attach an ASCII diagram if it helps clarify the structure of a system or flow.
 3. **Acceptance criteria** — a testable list. Each item is something a human or test could verify.
    - A flat list without emoji
    - Each item starts with the system or actor: "The CMS field exists...", "The endpoint accepts...", "The frontend renders..."
