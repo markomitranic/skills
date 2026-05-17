@@ -23,16 +23,16 @@ input=$(cat)
 # of model generations as frontier capabilities shift.
 #
 # < 60k   Perfect    — Full recall. Attention undiluted. Zero rot.
-# < 200k  Optimal    — Peak working range. MRCRv2 93%+. No degradation.
-# < 400k  Nominal    — Linear ~2%/100k drop. Compact above 300k.
-# < 700k  Degraded   — Middle-context undertended. Iterative use breaks.
-# ≥ 700k  Unreliable — ~25% retrieval failure at 1M. Use RAG / sub-agents.
+# < 130k  Optimal    — Peak working range. No meaningful degradation.
+# < 200k  Nominal    — Detectable drift. Compact soon.
+# < 300k  Degraded   — Middle-context undertended. Iterative use breaks.
+# ≥ 300k  Unreliable — Retrieval unreliable. Use RAG / sub-agents.
 context_emoji() {
   local tokens=$1
   if   [ "$tokens" -lt 60000  ]; then echo "😀"
-  elif [ "$tokens" -lt 200000 ]; then echo "🤓"
-  elif [ "$tokens" -lt 400000 ]; then echo "😐"
-  elif [ "$tokens" -lt 700000 ]; then echo "😣"
+  elif [ "$tokens" -lt 130000 ]; then echo "🤓"
+  elif [ "$tokens" -lt 200000 ]; then echo "😐"
+  elif [ "$tokens" -lt 300000 ]; then echo "😣"
   else                                echo "😡"
   fi
 }
