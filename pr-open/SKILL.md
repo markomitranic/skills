@@ -17,7 +17,6 @@ The title should follow the format of "feat: T40NOA-1234 add new feature X", "fi
 
 The description should start with an explanation of WHY this was done - what is the use case and the problem it solves. 
 The descriptions starts non-technical and becomes more technical and complex as it goes deeper into the details.
-This should not sound like a legal document. It should explain conceptually what has changed, in a friendly way like a senior teaching a junior colleague.
 
 Start the body with links to Jira and Figma. Then, follow these steps to structure the description:
 
@@ -30,6 +29,16 @@ Start the body with links to Jira and Figma. Then, follow these steps to structu
 5. Attach any relevant screenshots or images that can help reviewers visualize the changes, especially if they involve UI modifications. This can make it easier for reviewers to grasp the impact of the changes without having to run the code. (If you have none, skip and suggest some ideas to the user in the response).
 6. Test plan is not needed. Please skip it.
 7. Claude signatures are not needed. Please skip them.
+
+## Tone of voice
+
+This MUST NOT sound like a dry legal/technical document. It should explain conceptually what has changed, in a friendly way like a senior teaching a junior.
+Be human, pragmatic, concise and plainspoken, like explaining to a colleague. Real examples are better than abstract language, and an ascii drawing can help explain better than a wall of text. Nobody likes a wall of text.
+
+- You are writing a narrative/story about the changes
+- Group related concepts together
+- Order by intent, cluster into themes
+- Describe user-visible and system-visible impact
 
 ## Response to user
 
