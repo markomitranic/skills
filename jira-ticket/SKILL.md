@@ -7,7 +7,9 @@ description: Write a Jira ticket with a clear 3-part structure. Use this skill w
 
 Summarize all the information, context, and decisions, so that developers can easily catch up and clearly understand what they need to do. Make sure to include all the information and not lose information or context.
 
-Remember, a ticket is not a spec. Ticket tells a story of what needs to be done and why, but it should not include technical details, except when giving hints to the developer about where to look for more information. Nobody likes a wall of text and technical jargon. The ticket should be concise and focused on the outcome, not the implementation. It should be easy to read by PMs, QAs, designers, and developers alike.
+IMPORTANT: A ticket is not a spec. Ticket tells a story of what needs to be done and why, but it should NOT INCLUDE technical details, except when giving 
+hints to the developer about where to look for more information. Nobody likes a wall of text and technical jargon. The ticket should be concise and 
+focused on the outcome, not the implementation. It should be easy to read by PMs, QAs, designers, and developers alike. A good ticket explains WHAT, not HOW it's done.
 
 ## Workflow
 

@@ -11,7 +11,7 @@ The user is a tech lead. Their PRs typically get 2–3 AI reviewers (Greptile, C
 
 ## Core principles
 
-- **One comment at a time.** Never barrel through the list. After each comment is handled, stop and wait for the user to say "next" (or equivalent).
+- **One comment at a time.** Never barrel through the list. After each comment is handled, stop and wait for the user to say "next" (or equivalent).                
 - **The user decides, you assist.** You investigate, judge, and propose. They approve before you edit code or before they paste a rebuttal.
 - **Default to skepticism on both sides.** AI reviewers invent constraints; humans leave drive-by style preferences dressed as bugs. Check the actual code before agreeing with anyone.
 - **Don't push, don't sign.** Commits are local-only and unattributed to Claude. The user batches pushes manually to avoid retriggering AI review loops.
@@ -19,11 +19,14 @@ The user is a tech lead. Their PRs typically get 2–3 AI reviewers (Greptile, C
 ## Workflow
 
 1. Gather PR context (description, review summaries, checks, mergeability)
-2. Fetch unresolved review threads
-3. Triage one comment (or one tightly-related group), present verdict + proposal
-4. Wait for user direction
-5. If a fix is approved: implement → lint/test → commit (no Co-Authored-By, no push)
-6. Move to the next comment
+2. If AI reviewers have not yet completed their reviews, poll for completion on a 3-minute loop (see Step 1b)
+3. Fetch unresolved review threads
+4. Triage one comment (or one tightly-related group):
+   - **Simple, low-risk win** → auto-fix it (implement → lint/test → commit), then report what you did and move on
+   - **Bug, hallucination, or non-straightforward fix** → present verdict + proposal and wait for the user
+5. Wait for user direction (only for the non-trivial cases)
+6. If a fix is approved: implement → lint/test → commit (no Co-Authored-By, no push)
+7. Move to the next comment
 
 ## Step 1 — Gather context before triaging
 
@@ -39,6 +42,12 @@ Read:
 - **PR description** — the user's stated intent and scope. The single most important context for deciding whether a comment is on-target.
 - **Review summary bodies** from Greptile/Codex/etc. — these are the "thesis" of each AI's review. Don't address them directly (they're noise/marketing), but read them — they explain the framing of each line-level comment that follows.
 - **Failing checks and merge conflicts** — these count as issues to triage too. Surface them up front alongside the comment count, e.g.: *"3 unresolved threads, 1 failing check (typecheck), no merge conflicts."*
+
+## Step 1b — Wait for AI reviewers to finish (if needed)
+
+AI reviewers (Greptile, Copilot, BugBot) often take a few minutes to post their reviews after a push.
+If their reviews haven't landed yet, use `/loop` tool sleep for 3min between checks. 
+There is no point in proceeding until they are all done.
 
 ## Step 2 — Fetch unresolved review threads
 
@@ -86,7 +95,7 @@ If two threads are clearly the same issue (e.g., "missing null check" on three n
 
 ## Step 4 — Triage each comment
 
-For each comment (or group), produce three things in this order:
+For each comment (or group), produce three things in this order:                                                                                                   
 
 ### a) What they're actually saying
 
@@ -133,11 +142,22 @@ I suspect this is a false positive — `foo` is already null-checked at the call
 - Give a short example if it helps make it tangible (e.g., *"if `userId` is undefined here, the API call returns 500 instead of redirecting to login"*).
 - The reader doesn't know the full context and can't see the code, so a small markdown/ascii illustration, diagram and a before/after, that explain how the parts fit into the layered architecture helps a lot.
 - Propose a 1–2 sentence fix summary — what you'd change, not the actual diff.
-- Stop and wait for user approval before editing.
 
-## Step 5 — Apply the fix (only after approval)
+## Step 5 — Apply the fix
 
-When the user explicitly approves a fix:
+At this point, you must make a decision - auto-fix or escalate to the user?
+
+When in doubt, escalate. Hallucinations and non-straightforward changes are more likely to be bugs and the
+user needs to weigh the risks. Solutions that change logic, control flow or require user's taste and gut feeling
+require a human. Sit there and wait for human input.
+
+If the issue is an easy win with low risk, you may fix it yourself. Examples:
+- Typos, types, naming, comment/docstring fixes, dead-code or unused-import removal, missing null-guards or awaits.
+- Mechanical, obviously-correct changes the reviewer is plainly right about.
+- Pure formatting / lint-style nits
+- The change is local, reversible, and you have high confidence it's correct and won't alter intended behavior
+
+When we are ready to make a fix:
 
 1. Make the change.
 2. Run the project's lint and test commands if the change touches code. Check the project's `CLAUDE.md`, `package.json` scripts, or `Makefile` for the right commands (e.g., `pnpm lint && pnpm test`, `npm test`, `cargo test`).
@@ -177,7 +197,7 @@ After the commit (or after the user accepts a rebuttal as-is), say something bri
 
 ## Anti-patterns
 
-- Auto-fixing all comments in one pass without asking
+- Batch-fixing the whole list in one pass without working through it comment by comment
 - Pasting Claude-attributed commits or `Co-Authored-By` trailers
 - Pushing commits during the triage session
 - Resolving review threads on GitHub
