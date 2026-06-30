@@ -15,7 +15,9 @@ The title should follow the format of "feat: T40NOA-1234 add new feature X", "fi
 
 ## Description
 
-The description should start with an explanation of WHY this was done - what is the use case and the problem it solves. The descriptions starts non-technical and becomes more technical and complex as it goes deeper into the details.
+The description should start with an explanation of WHY this was done - what is the use case and the problem it solves. 
+The descriptions starts non-technical and becomes more technical and complex as it goes deeper into the details.
+This should not sound like a legal document. It should explain conceptually what has changed, in a friendly way like a senior teaching a junior colleague.
 
 Start the body with links to Jira and Figma. Then, follow these steps to structure the description:
 
