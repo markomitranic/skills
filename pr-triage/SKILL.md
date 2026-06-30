@@ -103,7 +103,11 @@ A 1–3 sentence plain-English summary of the comment's claim. AI reviewers espe
 
 Include who said it (the author's login) so the user knows whether they're dealing with a bot or a teammate — this changes the rebuttal tone (see below).
 
-Include an inline direct URL link to the comment.
+**Always lead with a clickable link to the exact comment** so the user can jump straight to the thread on GitHub — it's hard to track down which comment you're talking about otherwise. Use the `url` field from the GraphQL query (the URL of the *first comment* in the thread, which anchors directly to it). Format it on its own line at the top of each triage, e.g.:
+
+> **`path/to/file.ts:42` — @greptile-bot** · [view comment](https://github.com/OWNER/REPO/pull/123#discussion_r456789)
+
+If a group covers multiple threads, list a link per thread so each is individually reachable.
 
 ### b) Verdict — hallucination or real?
 
