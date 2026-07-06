@@ -26,7 +26,8 @@ The user is a tech lead. Their PRs typically get 2–3 AI reviewers (Greptile, C
    - **Bug, hallucination, or non-straightforward fix** → present verdict + proposal and wait for the user
 5. Wait for user direction (only for the non-trivial cases)
 6. If a fix is approved: implement → lint/test → commit (no Co-Authored-By, no push)
-7. Move to the next comment
+7. Resolve the handled GitHub review thread when the fix is committed or the rebuttal is posted
+8. Move to the next comment
 
 ## Step 1 — Gather context before triaging
 
@@ -103,8 +104,9 @@ A 1–3 sentence plain-English summary of the comment's claim. AI reviewers espe
 
 Include who said it (the author's login) so the user knows whether they're dealing with a bot or a teammate — this changes the rebuttal tone (see below).
 
-**Always lead with a clickable link to the exact comment** so the user can jump straight to the thread on GitHub — it's hard to track down which comment you're talking about otherwise. Use the `url` field from the GraphQL query (the URL of the *first comment* in the thread, which anchors directly to it). Format it on its own line at the top of each triage, e.g.:
+**Always lead with a clickable plain URL to the exact comment** so the user can jump straight to the thread on GitHub — it's hard to track down which comment you're talking about otherwise. Use the `url` field from the GraphQL query (the URL of the *first comment* in the thread, which anchors directly to it). Format it on its own line at the top of each triage, e.g.:
 
+EXAMPLE FORMAT:
 > **`path/to/file.ts:42` — @greptile-bot** · [view comment](https://github.com/OWNER/REPO/pull/123#discussion_r456789)
 
 If a group covers multiple threads, list a link per thread so each is individually reachable.
@@ -166,6 +168,7 @@ When we are ready to make a fix:
 1. Make the change.
 2. Run the project's lint and test commands if the change touches code. Check the project's `CLAUDE.md`, `package.json` scripts, or `Makefile` for the right commands (e.g., `pnpm lint && pnpm test`, `npm test`, `cargo test`).
 3. Commit. Do **not** push.
+4. Resolve the exact handled review thread on GitHub. Do **not** resolve unrelated, grouped-but-unfixed, outdated, or still-debated threads.
 
 ### Commit message style
 
@@ -186,9 +189,34 @@ git commit -m "fix: <why this matters>"
 
 Pass the message via `-m` directly (no heredoc with Claude attribution). If the project has a pre-commit hook that fails, fix the underlying issue and create a new commit — never `--amend` or `--no-verify`.
 
+## Resolving and replying to threads
+
+By default, resolve only the specific review thread that has just been handled.
+
+After a thread is handled:
+- If you made and committed a fix for that exact thread, resolve that thread on GitHub unless the user explicitly says not to.
+- If the user approves a rebuttal, post the rebuttal as a reply and resolve that thread unless the user explicitly says not to.
+- If a grouped triage covers multiple threads, resolve only the threads that the fix or rebuttal actually handles.
+- If the fix is committed locally but not pushed, still resolve the thread and tell the user that the matching commit is local-only.
+- Do **not** push commits unless the user explicitly asks.
+- Do **not** resolve threads that are unresolved by design, still being debated, unrelated to the current fix, or merely outdated.
+
+Use GitHub GraphQL to resolve review threads:
+
+```bash
+gh api graphql -f query='
+mutation($threadId: ID!) {
+  resolveReviewThread(input: { threadId: $threadId }) {
+    thread { id isResolved }
+  }
+}' -f threadId=THREAD_ID
+```
+
+Use `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies` or the GitHub API equivalent to post an approved rebuttal before resolving the thread. The rebuttal should be exactly what the user approved, without extra agent commentary.
+
 ## Step 6 — Move on
 
-After the commit (or after the user accepts a rebuttal as-is), say something brief like *"Done. Next?"* and wait. Do not auto-advance to the next comment. The user will signal when they're ready.
+After the commit and thread resolution (or after posting an approved rebuttal and resolving the thread), say something brief like *"Done. Next?"* and wait. Do not auto-advance to the next comment. The user will signal when they're ready.
 
 ## Things to watch for
 
@@ -196,7 +224,7 @@ After the commit (or after the user accepts a rebuttal as-is), say something bri
 - **AI reviewers hallucinate by inventing context** — they'll claim a function is called from somewhere it isn't, or that a type guarantees something it doesn't. When in doubt, check the actual code rather than trusting the comment's confident tone.
 - **Humans leave drive-by style preferences** dressed as issues. These deserve the same triage — disagree gently if you disagree.
 - **If a comment spans multiple files or is conceptually a refactor**, flag that to the user before diving in — they may want to defer or split it.
-- **Don't mark threads as resolved on GitHub.** That's part of the user's batch workflow, not yours.
+- **Resolve only handled threads.** Never bulk-resolve, and never resolve a thread just because it is noisy or outdated.
 - **CI failures and merge conflicts are issues too.** Triage them with the same one-at-a-time flow alongside the review comments.
 
 ## Anti-patterns
@@ -204,7 +232,8 @@ After the commit (or after the user accepts a rebuttal as-is), say something bri
 - Batch-fixing the whole list in one pass without working through it comment by comment
 - Pasting Claude-attributed commits or `Co-Authored-By` trailers
 - Pushing commits during the triage session
-- Resolving review threads on GitHub
+- Resolving review threads before a fix is committed or an approved rebuttal is posted
+- Bulk-resolving unrelated threads
 - Hedged verdicts ("it could be either…") when you actually have an opinion
 - Rebuttals written in third person ("Claude thinks this is wrong because…") instead of the user's first-person voice
 - Addressing the Greptile/Codex top-level summary as if it were a comment to respond to
