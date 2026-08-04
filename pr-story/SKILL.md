@@ -24,6 +24,13 @@ This MUST NOT sound like a dry legal/technical document. It should explain conce
 bad:  "This refactoring consolidates the type definitions to ensure consistency across both API integration layers."
 good: "There are 2 APIs but only 1 shared type. This makes the second API use it too."
 
+The whole page is what the author would say walking you through the PR at a whiteboard. If they wouldn't say it out loud, it doesn't go in.
+
+- Talk to "you", the reader: "you'll hit this again in chapter 3", not "the reader will encounter".
+- Answer the questions a junior would actually ask out loud ("wait, why is this in the worker?") — and no others.
+- Shrugging is a valid explanation. "The rest is plumbing, nothing surprising" is a complete, honest sentence, and often the kindest one.
+- Phrases like "it is worth noting", "this ensures", "leverages", "furthermore" are a smell: nobody says them out loud. When you catch one, suspect the whole sentence — usually it's restating rather than explaining, and the fix is rewriting the thought as speech, not swapping the word.
+
 Build a story, tell a narrative. Iteratively onboard the reader to the problem-space. Explain what things are. Give concrete examples, not abstract or imperative language. Use HTML or SVG drawings to visually represent what you are explaining.
 
 ## Storytelling
