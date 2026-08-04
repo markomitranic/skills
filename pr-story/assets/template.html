@@ -1,0 +1,1120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR #4821 — Sessions expire 24h after sign-in</title>
+
+<style>html:not(.ready) body { visibility: hidden }</style>
+<noscript><style>html:not(.ready) body { visibility: visible }</style></noscript>
+<script>
+  document.documentElement.dataset.theme =
+    matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+<style type="text/tailwindcss">
+  /* Tailwind v4 is configured in CSS, not JS — there is no tailwind.config object.
+     The literal characters "at" + "import" must never appear in this block, comments
+     included: one occurrence makes the whole sheet compile to nothing, silently. */
+  @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+  :root {
+    color-scheme: light;
+    --bg:#f6f8fa; --fg:#1f2328; --muted:#59636e; --card:#ffffff; --line:#d1d9e0;
+    --accent:#0969da; --add:#dafbe1; --del:#ffebe9;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --card:#161b22; --line:#30363d;
+    --accent:#58a6ff; --add:#12341f; --del:#3c1418;
+  }
+
+  /* `inline` is load-bearing. Without it the token resolves once at :root, so the
+     light/dark swap above reaches utilities only by luck and scoped overrides break. */
+  @theme inline {
+    --color-bg: var(--bg);     --color-fg: var(--fg);       --color-muted: var(--muted);
+    --color-card: var(--card); --color-line: var(--line);   --color-accent: var(--accent);
+    --color-add: var(--add);   --color-del: var(--del);
+    --breakpoint-wide: 60rem;
+  }
+
+  @layer base {
+    html, body { margin: 0; background: var(--bg); }
+    a { color: var(--accent); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em;
+      background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.1em 0.35em; }
+    pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+
+    /* Diff lines are display:block, so the <pre> must collapse the newlines between
+       them — otherwise every line renders double-spaced. Each .ln re-enables `pre`
+       so indentation survives. */
+    .diff { white-space: normal; }
+    .diff .ln { display: block; white-space: pre; padding: 0 0.9rem; }
+    .diff .add { background: var(--add); }
+    .diff .del { background: var(--del); }
+    .diff .ctx { color: var(--muted); }
+
+    .tip { border-bottom: 1px dotted var(--muted); cursor: help; }
+
+    .chapter:has([data-viewed]:checked) .chapter-body { display: none; }
+    .chapter:has([data-viewed]:checked) > header { opacity: 0.5; }
+  }
+
+  @layer components {
+    .sp-bubble { position:absolute; z-index:60; width:288px; padding:8px; border:1px solid var(--line);
+      border-radius:10px; background:var(--card); box-shadow:0 8px 24px #0006; font-size:13px; }
+    .sp-bubble[hidden] { display:none; }
+    .sp-in { box-sizing:border-box; width:100%; resize:vertical; margin-top:6px; padding:6px;
+      border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg);
+      font:inherit; font-size:13px; }
+    .sp-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; }
+    .sp-hint { color:var(--muted); font-size:11px; }
+    .sp-btn { cursor:pointer; padding:3px 8px; border:1px solid var(--line); border-radius:6px;
+      background:var(--bg); color:var(--fg); font:inherit; font-size:12px; }
+    .sp-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .sp-panel { position:fixed; right:16px; bottom:16px; z-index:55; width:320px;
+      max-width:calc(100vw - 32px); border:1px solid var(--line); border-radius:10px;
+      background:var(--card); box-shadow:0 8px 24px #0006; font-size:13px; transition:opacity .15s; }
+    .sp-panel.sp-min { width:auto; opacity:.55; }
+    .sp-panel:hover, .sp-panel:focus-within { opacity:1; }
+    .sp-panel.sp-min .sp-body { display:none; }
+    .sp-panel.sp-min .sp-caret { display:inline-block; transform:rotate(-90deg); }
+    .sp-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; }
+    .sp-ttl { display:flex; align-items:center; gap:6px; padding:0; border:0; background:none;
+      cursor:pointer; color:var(--fg); font:inherit; font-weight:600; }
+    .sp-caret { color:var(--muted); }
+    .sp-badge { min-width:18px; padding:0 5px; border-radius:9px; background:var(--accent);
+      color:var(--card); text-align:center; font-size:11px; font-weight:700; }
+    .sp-body { max-height:45vh; overflow-y:auto; padding:8px 10px; border-top:1px solid var(--line); }
+    .sp-list { margin:0; padding:0; list-style:none; }
+    .sp-item { padding:8px 0; border-bottom:1px solid var(--line); }
+    .sp-item:last-child { border-bottom:0; }
+    .sp-where { color:var(--muted); font-size:11px; }
+    .sp-quote { margin:3px 0; max-height:44px; overflow:hidden; padding-left:7px;
+      border-left:2px solid var(--accent); color:var(--muted); white-space:pre-wrap;
+      overflow-wrap:anywhere; font-family:ui-monospace,Menlo,monospace; font-size:11px; }
+    .sp-note { margin:3px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .sp-acts { display:flex; gap:6px; margin-top:4px; }
+    .sp-empty { margin:0; color:var(--muted); font-size:12px; }
+  }
+</style>
+</head>
+
+<body class="bg-bg font-sans text-base leading-relaxed text-fg">
+
+<!-- Everything below is a worked example. Replace the content, keep the shapes.
+     Rules that bite:
+     · Escape &amp; &lt; &gt; in every code block. Systematically, not by eye.
+     · Chapter ids are purpose slugs (ch-session-expiry), never numbers.
+     · One outline <li> per chapter, same text as its <h2>.
+     · Delete any section you have nothing to put in. Do not pad.               -->
+
+<div class="mx-auto max-w-[1200px] p-6">
+  <div id="prsProgress" class="fixed left-0 top-0 z-50 h-[3px] w-0 bg-accent transition-[width] duration-100"></div>
+
+  <header class="mb-6">
+    <h1 class="mb-1 text-[1.7rem] font-bold leading-tight">Sessions expire 24h after sign-in</h1>
+    <p class="mb-3 text-sm text-muted">
+      <a href="https://github.com/acme/dashboard/pull/4821">acme/dashboard #4821</a>
+      · <code>feat/session-expiry</code> · 34 files (+612 −188) · 5 chapters
+    </p>
+    <p class="max-w-[70ch] text-[1.05rem]">
+      Signing in to the dashboard used to hand you a session that lived forever. This PR gives every
+      session a 24-hour clock, teaches the browser to tell "your session ran out" apart from "you were
+      never signed in", and deletes the dead rows on a schedule. Anyone signed in when this deploys
+      gets logged out.
+    </p>
+  </header>
+
+  <section class="mb-5 rounded-xl border border-line bg-card px-5 py-4">
+    <h2 class="mb-3 text-xl font-semibold">What's in here</h2>
+
+    <p class="mb-4 max-w-[75ch]">
+      Scope is deliberately narrow. It does not touch how you sign in (password, Okta SSO), it adds no
+      refresh tokens, and it adds no "remember me" — those stay exactly as they are.
+    </p>
+
+    <h3 class="mb-1 mt-3 text-xs font-semibold uppercase tracking-wider text-muted">New behaviour</h3>
+    <ul class="mb-3 list-disc pl-5">
+      <li>Sessions carry an <code>expiresAt</code>, stamped at creation 24 hours out.
+        <code>validateSession()</code> refuses anything past it.</li>
+      <li>Time is read through a small <code>SessionClock</code> seam instead of <code>Date.now()</code>,
+        so tests can fast-forward a day in a millisecond.</li>
+      <li>An expired session gets <code>401</code> plus an <code>X-Session-Expired: 1</code> header, so
+        the frontend can tell "ran out" apart from "never signed in".</li>
+      <li>The web app reacts once, centrally: a toast, then a redirect to
+        <code>/login?reason=expired</code>.</li>
+      <li>A worker job sweeps expired rows out of <code>sessions</code> every 15 minutes.</li>
+    </ul>
+
+    <h3 class="mb-1 mt-3 text-xs font-semibold uppercase tracking-wider text-muted">Plumbing</h3>
+    <ul class="mb-3 list-disc pl-5">
+      <li><code>SessionClock</code> threaded through three <code>createSession()</code> call sites, four
+        <code>validateSession()</code> ones, and the API's DI container.</li>
+      <li>CORS now exposes <code>X-Session-Expired</code> — without that the browser hides it from JS.</li>
+    </ul>
+
+    <h3 class="mb-1 mt-3 text-xs font-semibold uppercase tracking-wider text-muted">Worth knowing</h3>
+    <ul class="mb-3 list-disc pl-5">
+      <li><strong>The TTL is measured from <code>createdAt</code>, not <code>lastSeenAt</code>.</strong>
+        DASH-2274 originally asked for a sliding window where every request pushes the deadline out. That
+        got dropped. As written, someone actively clicking around is logged out 24h after signing in,
+        mid-session. Sliding renewal is tracked separately in DASH-2318.</li>
+      <li><strong>Everyone gets logged out on deploy.</strong> The migration backfills existing rows with
+        <code>created_at + interval '24 hours'</code>. There are ~1.4M rows and the median one is months
+        old, so they expire the instant the column exists. Intentional, but user-visible.</li>
+      <li><strong>Open streams are not killed.</strong> SSE and the dashboard websocket validate once, at
+        connect. An expired session dies on the next reconnect — at most 60s for SSE, up to 5 minutes for
+        the socket. DASH-2274 scopes the TTL to request authentication only.</li>
+      <li>The clock seam stops at <code>packages/auth</code> and the sweeper. Everything else still calls
+        <code>Date.now()</code>. Half-threaded on purpose.</li>
+    </ul>
+
+    <h3 class="mb-1 mt-3 text-xs font-semibold uppercase tracking-wider text-muted">Links</h3>
+    <ul class="mb-4 list-disc pl-5">
+      <li><a href="https://acme.atlassian.net/browse/DASH-2274">DASH-2274 — Expire abandoned dashboard
+        sessions</a>, follow-up <a href="https://acme.atlassian.net/browse/DASH-2318">DASH-2318 — sliding
+        renewal</a></li>
+      <li><a href="https://www.figma.com/design/8pQ2vKmYr1/Acme-Dashboard-Auth?node-id=412-2087">Figma —
+        session-expired toast and login banner</a></li>
+      <li><a href="https://dashboard-storybook.acme.dev/?path=/story/auth-sessionexpiredtoast--default">Storybook
+        — <code>Auth/SessionExpiredToast</code></a></li>
+      <li><a href="https://grafana.acme.dev/d/sess-01/sessions?var-env=staging">Grafana — sessions table
+        size and sweeper throughput</a></li>
+    </ul>
+
+    <svg viewBox="0 0 720 196" class="w-full max-w-[720px]" role="img"
+        aria-label="Before: the session stays valid forever. After: valid for 24h, then 401 until the sweeper deletes the row.">
+      <defs>
+        <pattern id="dead" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+          <line x1="3.5" y1="0" x2="3.5" y2="7" stroke="var(--line)" stroke-width="3.5"/>
+        </pattern>
+        <linearGradient id="forever" x1="0" x2="1">
+          <stop offset="0.75" stop-color="var(--add)"/>
+          <stop offset="1" stop-color="var(--add)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+
+      <text x="0" y="24" font-size="12" font-weight="700" fill="var(--fg)">Before</text>
+      <rect x="46" y="32" width="660" height="20" rx="5" fill="url(#forever)"/>
+      <circle cx="46" cy="42" r="4.5" fill="var(--accent)"/>
+      <circle cx="120" cy="42" r="4" fill="var(--bg)" stroke="var(--muted)"/>
+      <circle cx="600" cy="42" r="4" fill="var(--bg)" stroke="var(--muted)"/>
+      <text x="112" y="24" font-size="11" fill="var(--muted)">laptop closed</text>
+      <text x="600" y="24" font-size="11" font-weight="700" fill="var(--fg)" text-anchor="middle">cookie replayed → 200 OK</text>
+
+      <text x="0" y="100" font-size="12" font-weight="700" fill="var(--fg)">After</text>
+      <rect x="46" y="108" width="354" height="20" rx="5" fill="var(--add)"/>
+      <rect x="400" y="108" width="140" height="20" fill="url(#dead)"/>
+      <line x1="400" y1="94" x2="400" y2="140" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <circle cx="46" cy="118" r="4.5" fill="var(--accent)"/>
+      <text x="404" y="90" font-size="11" font-weight="700" fill="var(--accent)">expiresAt</text>
+      <text x="470" y="152" font-size="11" fill="var(--muted)" text-anchor="middle">row still there,</text>
+      <text x="470" y="165" font-size="11" fill="var(--muted)" text-anchor="middle">401 + X-Session-Expired</text>
+      <text x="548" y="122" font-size="11" fill="var(--muted)">sweeper deletes row</text>
+      <path d="M96 118 L58 118 M64 114 L58 118 L64 122" fill="none" stroke="var(--muted)"/>
+      <text x="102" y="115" font-size="11" fill="var(--fg)">expiresAt = createdAt + 24h</text>
+      <text x="102" y="128" font-size="10" fill="var(--muted)">— not lastSeenAt</text>
+
+      <line x1="46" y1="180" x2="706" y2="180" stroke="var(--line)"/>
+      <text x="46" y="194" font-size="10" fill="var(--muted)">0h sign-in</text>
+      <text x="120" y="194" font-size="10" fill="var(--muted)" text-anchor="middle">2h</text>
+      <text x="400" y="194" font-size="10" fill="var(--muted)" text-anchor="middle">24h</text>
+      <text x="540" y="194" font-size="10" fill="var(--muted)" text-anchor="middle">+6h</text>
+      <text x="706" y="194" font-size="10" fill="var(--muted)" text-anchor="end">weeks later</text>
+    </svg>
+  </section>
+
+  <section class="mb-5 rounded-xl border border-line bg-card px-5 py-4">
+    <h2 class="mb-3 text-xl font-semibold">How this part of the system works</h2>
+
+    <p class="mb-3 max-w-[75ch]">Three places in this monorepo care about sessions, and the change touches
+      all three.</p>
+    <p class="mb-3 max-w-[75ch]"><strong><code>packages/auth</code></strong> is the domain layer. It owns
+      two functions and no HTTP: <code>createSession()</code> writes a row and returns a raw token,
+      <code>validateSession()</code> takes a raw token and tells you whose it is. It never touches the
+      network and has no idea what a cookie is. Session rules change here.</p>
+    <p class="mb-3 max-w-[75ch]"><strong><code>services/api</code></strong> is a Fastify app. Its
+      <code>authenticate</code> plugin runs as an <code>onRequest</code> hook on every route under
+      <code>/api/v1</code>, pulls the <code>acme_session</code> cookie, hands the token to
+      <code>validateSession()</code>, and either attaches <code>request.currentUser</code> or throws.
+      Every route trusts that plugin and never re-checks.</p>
+    <p class="mb-3 max-w-[75ch]"><strong><code>apps/web</code></strong> is the React dashboard. Every
+      network call goes through one wrapper, <code>apiFetch()</code>. Nothing calls <code>fetch()</code>
+      directly — which is why one change in that wrapper catches expiry app-wide.</p>
+
+    <pre class="my-4 overflow-x-auto rounded-lg border border-line bg-bg p-3 text-[0.78rem] leading-relaxed text-muted">apps/web  ──apiFetch()──▶  services/api  ──authenticate──▶  packages/auth
+                                                             │ validateSession()
+                                                             ▼
+                                                      packages/db  (sessions)
+                                                             ▲
+                                                 services/worker (cron jobs)</pre>
+
+    <p class="max-w-[75ch] border-l-4 border-l-accent pl-4">
+      <strong>Start here:</strong>
+      <a href="https://github.com/acme/dashboard/blob/feat/session-expiry/packages/auth/src/session.ts"><code>packages/auth/src/session.ts</code></a>.
+      It is the only file where the
+      new rule actually lives. Everything else in this PR either feeds it a clock, reacts to what it
+      returns, or cleans up after it.
+    </p>
+  </section>
+
+  <!-- minmax(0,1fr) is load-bearing: a bare `1fr` takes its minimum from min-content, so one
+       long diff line widens the track and the whole page scrolls sideways instead of the <pre>. -->
+  <div class="grid grid-cols-[minmax(0,1fr)] gap-6 wide:grid-cols-[250px_minmax(0,1fr)]">
+    <nav class="prs-outline text-sm wide:sticky wide:top-4 wide:self-start" aria-label="Chapters">
+      <div id="prsViewedCount" class="text-xs text-muted"></div>
+      <ol class="my-2 list-decimal pl-6 marker:text-muted">
+        <li class="my-1.5"><a href="#ch-session-expiry">Sessions get a 24-hour deadline</a></li>
+        <li class="my-1.5"><a href="#ch-expired-vs-anonymous">Telling "expired" apart from "never signed in"</a></li>
+        <li class="my-1.5"><a href="#ch-sweep-dead-rows">Expired rows get deleted, not just ignored</a></li>
+        <li class="my-1.5"><a href="#ch-clock-plumbing">Threading the clock to the call sites</a></li>
+        <li class="my-1.5"><a href="#ch-try-it">How to check this yourself</a></li>
+      </ol>
+      <a class="mt-3 block text-muted" href="#coverage">All 34 files, and where each went</a>
+      <a class="mt-1 block text-muted" href="#appendix">Appendix: demoted changes</a>
+    </nav>
+
+    <main class="min-w-0">
+
+      <section id="ch-session-expiry" class="chapter mb-10 scroll-mt-4">
+        <header class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-2">
+          <h2 class="grow text-2xl font-semibold">Sessions get a 24-hour deadline</h2>
+          <span class="rounded-full border border-line px-2 py-0.5 text-xs text-muted">business logic</span>
+          <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
+            <input type="checkbox" data-viewed class="cursor-pointer accent-accent"> viewed
+          </label>
+        </header>
+
+        <div class="chapter-body">
+          <p class="mb-3 max-w-[75ch]">Before this PR a session row had a <code>createdAt</code>, a
+            <code>lastSeenAt</code> and a nullable <code>revokedAt</code>. <code>revokedAt</code> is only
+            ever set by an explicit logout or an admin killing a session. Nothing else could end a session,
+            so a cookie lifted off a laptop that got wiped in March still worked in August.</p>
+          <p class="mb-3 max-w-[75ch]">This chapter adds the deadline. Every new session gets an
+            <code>expiresAt</code>, stamped at creation 24 hours after <code>createdAt</code>.
+            <code>validateSession()</code> grows a third failure mode next to "no such session" and
+            "revoked": "expired". And because a rule about time is untestable when the code reads the wall
+            clock, time now arrives as an argument — a <code>SessionClock</code>.</p>
+          <p class="mb-4 max-w-[75ch]">One detail to pin down before the code: the deadline is anchored to
+            <code>createdAt</code>. Not <code>lastSeenAt</code>, which the table already tracks and bumps
+            on every request. So this is a hard stop from sign-in, not an idle timeout.</p>
+
+          <ul class="mb-5 list-disc pl-5 text-[0.95rem]">
+            <li>New <code>expiresAt</code> column, plus a partial index for the sweeper</li>
+            <li>New <code>SessionClock</code> seam and <code>systemClock</code></li>
+            <li><code>SESSION_TTL_MS</code> = 24h, alone in its own file</li>
+            <li><code>createSession()</code> stamps the deadline; <code>validateSession()</code> enforces it</li>
+            <li>New <code>'expired'</code> arm on <code>SessionResult</code></li>
+            <li><code>TestClock</code> with <code>advance()</code>, and tests that fast-forward a day</li>
+          </ul>
+
+          <table class="mb-5 w-full border-collapse text-[0.9rem]">
+            <thead>
+              <tr class="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
+                <th class="py-1.5 pr-3 font-semibold"></th>
+                <th class="py-1.5 pr-3 font-semibold">Before</th>
+                <th class="py-1.5 font-semibold">After</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-line">
+                <td class="py-1.5 pr-3 align-top text-muted">Session ends when</td>
+                <td class="py-1.5 pr-3 align-top">user logs out, or an admin revokes</td>
+                <td class="py-1.5 align-top">that, <strong>or</strong> 24h after <code>createdAt</code></td>
+              </tr>
+              <tr class="border-b border-line">
+                <td class="py-1.5 pr-3 align-top text-muted">Effect of activity</td>
+                <td class="py-1.5 pr-3 align-top">none — sessions were immortal</td>
+                <td class="py-1.5 align-top">none — <code>lastSeenAt</code> does not move the deadline</td>
+              </tr>
+              <tr class="border-b border-line">
+                <td class="py-1.5 pr-3 align-top text-muted">Impersonation sessions</td>
+                <td class="py-1.5 pr-3 align-top">never expired</td>
+                <td class="py-1.5 align-top">expire in 24h like any other</td>
+              </tr>
+              <tr class="border-b border-line">
+                <td class="py-1.5 pr-3 align-top text-muted">Failure modes</td>
+                <td class="py-1.5 pr-3 align-top"><code>not_found</code>, <code>revoked</code></td>
+                <td class="py-1.5 align-top"><code>not_found</code>, <code>revoked</code>,
+                  <code>expired</code></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="mb-2 max-w-[75ch]"><strong>Schema first.</strong> The column is <code>NOT NULL</code>
+            with no default, so every writer has to compute a value rather than letting Postgres supply
+            one. The index is partial and covers only rows that are not revoked, because the sweeper's
+            query in Chapter 3 never looks at revoked rows.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">packages/db/src/schema/sessions.ts:12</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln ctx">     userId: uuid('user_id').notNull().references(() =&gt; users.id),</span>
+<span class="ln ctx">     tokenHash: text('token_hash').notNull(),</span>
+<span class="ln ctx">     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),</span>
+<span class="ln ctx">     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),</span>
+<span class="ln add">+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),</span>
+<span class="ln ctx">     revokedAt: timestamp('revoked_at', { withTimezone: true }),</span>
+<span class="ln ctx">   },</span>
+<span class="ln ctx">   (t) =&gt; ({</span>
+<span class="ln ctx">     tokenHashIdx: uniqueIndex('sessions_token_hash_idx').on(t.tokenHash),</span>
+<span class="ln add">+    expiresAtIdx: index('sessions_expires_at_idx')</span>
+<span class="ln add">+      .on(t.expiresAt)</span>
+<span class="ln add">+      .where(sql`revoked_at is null`),</span>
+<span class="ln ctx">   }),</span></pre>
+          </div>
+
+          <p class="mb-2 max-w-[75ch]">The generated migration adds the column nullable, backfills, then
+            sets <code>NOT NULL</code> — the standard three-step so it does not lock the table while 1.4M
+            rows get written.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">packages/db/migrations/0031_session_expires_at.sql</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln add">+alter table sessions add column expires_at timestamptz;</span>
+<span class="ln add">+update sessions set expires_at = created_at + interval '24 hours' where expires_at is null;</span>
+<span class="ln add">+alter table sessions alter column expires_at set not null;</span>
+<span class="ln add">+create index concurrently sessions_expires_at_idx on sessions (expires_at)</span>
+<span class="ln add">+  where revoked_at is null;</span></pre>
+          </div>
+
+          <p class="mb-4 max-w-[75ch]">That <code>update</code> is the reason everyone gets logged out on
+            deploy. There is no grace period in it.</p>
+
+          <p class="mb-2 max-w-[75ch]"><strong>Then the rule.</strong> <code>SessionClock</code> is one
+            method — that is the whole seam, and <code>systemClock</code> is the default argument
+            everywhere, so the 40-odd existing calls that don't care about time keep compiling unchanged.
+            <code>createSession()</code> does the addition once, at write time: the deadline is stored, not
+            recomputed on read, so changing <code>SESSION_TTL_MS</code> later will not retroactively move
+            existing sessions.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">packages/auth/src/session.ts:21</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln add">+import { type SessionClock, systemClock } from './clock';</span>
+<span class="ln add">+import { SESSION_TTL_MS } from './ttl';</span>
+<span class="ln ctx"> </span>
+<span class="ln ctx"> export async function createSession(</span>
+<span class="ln ctx">   input: CreateSessionInput,</span>
+<span class="ln add">+  clock: SessionClock = systemClock,</span>
+<span class="ln ctx"> ): Promise&lt;{ token: string; session: Session }&gt; {</span>
+<span class="ln ctx">   const token = randomToken(32);</span>
+<span class="ln add">+  const now = clock.now();</span>
+<span class="ln ctx">   const [session] = await db.insert(sessions).values({</span>
+<span class="ln ctx">     userId: input.userId,</span>
+<span class="ln ctx">     tokenHash: hashToken(token),</span>
+<span class="ln add">+    createdAt: now,</span>
+<span class="ln add">+    lastSeenAt: now,</span>
+<span class="ln add">+    expiresAt: new Date(now.getTime() + SESSION_TTL_MS),</span>
+<span class="ln ctx">   }).returning();</span></pre>
+          </div>
+
+          <p class="mb-2 max-w-[75ch]"><code>validateSession()</code> already returned a
+            <span class="tip" title="A union where one field — here `ok` — tells you which shape you got, so the compiler can force you to handle every case.">discriminated
+            union</span> rather than throwing, so adding a reason is additive: TypeScript only complains
+            where a caller matches exhaustively, which is Chapter 2. Note the order: revoked is checked
+            before expired, so a session
+            that was logged out <em>and</em> aged out reports <code>revoked</code>. The audit log records
+            that reason verbatim.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">packages/auth/src/session.ts:48</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln ctx"> export type SessionResult =</span>
+<span class="ln ctx">   | { ok: true; session: Session }</span>
+<span class="ln del">-  | { ok: false; reason: 'not_found' | 'revoked' };</span>
+<span class="ln add">+  | { ok: false; reason: 'not_found' | 'revoked' | 'expired' };</span>
+<span class="ln ctx"> </span>
+<span class="ln ctx"> export async function validateSession(</span>
+<span class="ln ctx">   rawToken: string,</span>
+<span class="ln add">+  clock: SessionClock = systemClock,</span>
+<span class="ln ctx"> ): Promise&lt;SessionResult&gt; {</span>
+<span class="ln ctx">   if (!session) return { ok: false, reason: 'not_found' };</span>
+<span class="ln ctx">   if (session.revokedAt) return { ok: false, reason: 'revoked' };</span>
+<span class="ln add">+  if (session.expiresAt &lt;= clock.now()) return { ok: false, reason: 'expired' };</span>
+<span class="ln ctx"> </span>
+<span class="ln del">-  await touchSession(session.id);</span>
+<span class="ln add">+  await touchSession(session.id, clock);</span>
+<span class="ln ctx">   return { ok: true, session };</span></pre>
+          </div>
+
+          <p class="mb-2 max-w-[75ch]"><code>touchSession()</code> still writes <code>lastSeenAt</code> on
+            every validated request. It just has no influence on <code>expiresAt</code> — the two
+            timestamps are unrelated now, and that is the sliding-window decision showing up in code. The
+            test beside it is what the clock seam buys: it runs in under a millisecond and does not depend
+            on machine time.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">packages/auth/src/__tests__/session.test.ts:14</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln add">+  it('rejects a session one minute late, even with activity in between', async () =&gt; {</span>
+<span class="ln add">+    const clock = new TestClock('2026-03-01T09:00:00Z');</span>
+<span class="ln add">+    const { token } = await createSession({ userId: user.id }, clock);</span>
+<span class="ln add">+</span>
+<span class="ln add">+    clock.advance(12 * 60 * 60 * 1000);</span>
+<span class="ln add">+    await validateSession(token, clock); // bumps lastSeenAt</span>
+<span class="ln add">+    clock.advance(12 * 60 * 60 * 1000 + 1);</span>
+<span class="ln add">+</span>
+<span class="ln add">+    expect(await validateSession(token, clock)).toEqual({ ok: false, reason: 'expired' });</span>
+<span class="ln add">+  });</span></pre>
+          </div>
+
+          <p class="max-w-[75ch]">That test is the readable statement of the trade-off: activity at hour 12
+            does not buy the user another day.</p>
+
+          <p class="mt-4 max-w-[75ch]"><strong>Who calls this.</strong> Grepping outside the diff,
+            <code>createSession()</code> has exactly three callers —
+            <code>routes/auth/login.ts</code> (password), <code>routes/auth/sso-callback.ts</code> (Okta),
+            and <code>routes/admin/impersonate.ts</code> (support staff impersonating a customer). That
+            third one is worth noticing: impersonation sessions were the longest-lived rows in the table,
+            and they now die in 24h with everything else. <code>validateSession()</code> has four callers,
+            and they are the next chapter.</p>
+        </div>
+      </section>
+
+      <section id="ch-expired-vs-anonymous" class="chapter mb-10 scroll-mt-4">
+        <header class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-2">
+          <h2 class="grow text-2xl font-semibold">Telling "expired" apart from "never signed in"</h2>
+          <span class="rounded-full border border-line px-2 py-0.5 text-xs text-muted">business logic</span>
+          <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
+            <input type="checkbox" data-viewed class="cursor-pointer accent-accent"> viewed
+          </label>
+        </header>
+
+        <div class="chapter-body">
+          <p class="mb-3 max-w-[75ch]">Here is the problem the frontend had. The API's answer to "I have no
+            valid session" was a bare <code>401</code>, for every reason. So the web app could not tell two
+            very different people apart: someone who is not logged in at all, and someone who <em>was</em>
+            logged in, is mid-task, and just aged out. Both got the same silent bounce to
+            <code>/login</code>, which reads as a bug — you were typing, and then you weren't.</p>
+          <p class="mb-4 max-w-[75ch]">This chapter makes them distinguishable. The status code does not
+            change, so nothing that depends on <code>401</code> breaks. Instead the expired case carries a
+            response header, <code>X-Session-Expired: 1</code>. A header rather than a body field is
+            deliberate: <code>apiFetch()</code> can check it without reading and parsing the body, which
+            matters because some <code>401</code>s come back on requests whose bodies the caller streams.</p>
+
+          <ul class="mb-5 list-disc pl-5 text-[0.95rem]">
+            <li><code>authenticate</code> maps <code>reason</code> to a response: <code>expired</code> →
+              <code>401</code> + header + <code>{ error: 'session_expired' }</code></li>
+            <li><code>X-Session-Expired</code> added to CORS <code>exposedHeaders</code></li>
+            <li><code>apiFetch()</code> detects it once, centrally, and fires a callback</li>
+            <li>New <code>SessionExpiryBoundary</code> shows one toast and redirects</li>
+            <li>Login page reads <code>reason=expired</code> and explains itself</li>
+          </ul>
+
+          <p class="mb-2 max-w-[75ch]"><strong>Start at the plugin, because every route depends on it.</strong>
+            Before this change it did <code>if (!result.ok) throw unauthorized()</code> — one branch for
+            every failure. Now it switches on <code>reason</code>. This is the one file the new union member
+            broke at compile time: nothing else in the repo matches <code>SessionResult</code>
+            exhaustively, so nothing else had to change.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">services/api/src/plugins/authenticate.ts:22</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln ctx">     const result = await validateSession(token);</span>
+<span class="ln ctx"> </span>
+<span class="ln del">-    if (!result.ok) {</span>
+<span class="ln del">-      return reply.code(401).send({ error: 'unauthenticated' });</span>
+<span class="ln del">-    }</span>
+<span class="ln add">+    if (!result.ok) {</span>
+<span class="ln add">+      reply.clearCookie(SESSION_COOKIE, { path: '/' });</span>
+<span class="ln add">+      if (result.reason === 'expired') {</span>
+<span class="ln add">+        return reply.code(401).header('X-Session-Expired', '1')</span>
+<span class="ln add">+          .send({ error: 'session_expired' });</span>
+<span class="ln add">+      }</span>
+<span class="ln add">+      return reply.code(401).send({ error: 'unauthenticated' });</span>
+<span class="ln add">+    }</span>
+<span class="ln ctx"> </span>
+<span class="ln ctx">     request.currentUser = result.session.userId;</span></pre>
+          </div>
+
+          <p class="mb-2 max-w-[75ch]">One line in the CORS config decides whether any of this reaches the
+            browser. Without <code>exposedHeaders</code>, <code>res.headers.get()</code> returns
+            <code>null</code> cross-origin and the frontend silently falls back to the old behaviour. This
+            is invisible in <code>curl</code>, which has no same-origin policy.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">services/api/src/app.ts:41</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln ctx"> app.register(cors, {</span>
+<span class="ln ctx">   origin: config.webOrigins,</span>
+<span class="ln del">-  exposedHeaders: ['X-Request-Id'],</span>
+<span class="ln add">+  exposedHeaders: ['X-Request-Id', 'X-Session-Expired'],</span>
+<span class="ln ctx"> });</span></pre>
+          </div>
+
+          <p class="mb-2 max-w-[75ch]"><strong>Then the client.</strong> <code>apiFetch()</code> is the only
+            thing in <code>apps/web</code> that calls <code>fetch()</code> — an ESLint rule enforces that —
+            so it is a genuine single choke point for all ~90 call sites. It still throws, so in-flight
+            React Query calls fail and unmount as they normally would; the toast and redirect are a side
+            effect of the throw, not a replacement for it.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">apps/web/src/lib/api-client.ts:8</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln add">+let onSessionExpired: () =&gt; void = () =&gt; {};</span>
+<span class="ln add">+</span>
+<span class="ln add">+/** Registered once by SessionExpiryBoundary; runs on any 401 carrying X-Session-Expired. */</span>
+<span class="ln add">+export function setSessionExpiredHandler(handler: () =&gt; void): void {</span>
+<span class="ln add">+  onSessionExpired = handler;</span>
+<span class="ln add">+}</span>
+<span class="ln ctx"> </span>
+<span class="ln ctx"> export async function apiFetch&lt;T&gt;(path: string, init?: RequestInit): Promise&lt;T&gt; {</span>
+<span class="ln ctx">   const res = await fetch(`${config.apiBase}${path}`, { credentials: 'include', ...init });</span>
+<span class="ln add">+</span>
+<span class="ln add">+  if (res.status === 401 &amp;&amp; res.headers.get('x-session-expired') === '1') {</span>
+<span class="ln add">+    onSessionExpired();</span>
+<span class="ln add">+    throw new ApiError(401, 'session_expired');</span>
+<span class="ln add">+  }</span>
+<span class="ln ctx"> </span>
+<span class="ln ctx">   if (!res.ok) throw new ApiError(res.status, await readErrorCode(res));</span></pre>
+          </div>
+
+          <p class="mb-2 max-w-[75ch]"><strong>Then the UI.</strong>
+            <code>SessionExpiryBoundary</code> wraps the authed layout. The <code>handled</code> ref is the
+            whole point of the component: a dashboard page fires six or seven parallel requests, they all
+            come back <code>401</code> at once, and without the guard you get seven toasts and seven
+            navigations.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">apps/web/src/app/session-expiry-boundary.tsx (new)</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln add">+export function SessionExpiryBoundary({ children }: { children: React.ReactNode }) {</span>
+<span class="ln add">+  const router = useRouter();</span>
+<span class="ln add">+  const handled = useRef(false);</span>
+<span class="ln add">+</span>
+<span class="ln add">+  useEffect(() =&gt; {</span>
+<span class="ln add">+    setSessionExpiredHandler(() =&gt; {</span>
+<span class="ln add">+      if (handled.current) return;</span>
+<span class="ln add">+      handled.current = true;</span>
+<span class="ln add">+      toast.info('Your session expired. Please sign in again.');</span>
+<span class="ln add">+      router.replace('/login?reason=expired');</span>
+<span class="ln add">+    });</span>
+<span class="ln add">+    return () =&gt; setSessionExpiredHandler(() =&gt; {});</span>
+<span class="ln add">+  }, [router]);</span>
+<span class="ln add">+</span>
+<span class="ln add">+  return &lt;&gt;{children}&lt;/&gt;;</span>
+<span class="ln add">+}</span></pre>
+          </div>
+
+          <p class="max-w-[75ch]"><strong>Who else calls <code>validateSession()</code>.</strong> Three call
+            sites outside the plugin, none of them changed, and none of them read
+            <code>reason</code> — so only the REST path produces the header.
+            <code>routes/events/stream.ts</code> (SSE) and <code>ws/upgrade.ts</code> (live dashboard tiles)
+            validate at connect only, so an expired session survives until the client reconnects.
+            <code>services/worker/src/http/preview-link.ts</code> reuses dashboard sessions for signed
+            preview links. Those links now stop working 24h after their owner signed in, even though a
+            preview link carries its own separate expiry. DASH-2274 does not mention preview links.</p>
+        </div>
+      </section>
+
+      <section id="ch-sweep-dead-rows" class="chapter mb-10 scroll-mt-4">
+        <header class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-2">
+          <h2 class="grow text-2xl font-semibold">Expired rows get deleted, not just ignored</h2>
+          <span class="rounded-full border border-line px-2 py-0.5 text-xs text-muted">business logic</span>
+          <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
+            <input type="checkbox" data-viewed class="cursor-pointer accent-accent"> viewed
+          </label>
+        </header>
+
+        <div class="chapter-body">
+          <p class="mb-3 max-w-[75ch]">An expired session still exists as a row.
+            <code>validateSession()</code> refuses it, so it is harmless — but the table already has 1.4M
+            rows and gains roughly 40k a day, and after the backfill nearly all of them are dead weight
+            sitting in the index the API hits on every single request.</p>
+          <p class="mb-4 max-w-[75ch]">The job lives in <code>services/worker</code>, the existing cron
+            host — it already runs <code>expire-invites</code> and <code>rotate-api-keys</code> on the same
+            scheduler, so this is a fourth entry in a list rather than new infrastructure. It deletes in
+            bounded batches and loops, because one <code>DELETE</code> covering a million rows takes a lock
+            nobody wants during business hours.</p>
+
+          <ul class="mb-5 list-disc pl-5 text-[0.95rem]">
+            <li>Batched <code>DELETE</code>, 1000 rows at a time, capped at 50 batches per run</li>
+            <li>Registered on a <code>*/15 * * * *</code> cron beside the other worker jobs</li>
+            <li>Emits <code>sessions_swept_total</code> so the Grafana panel shows the table draining</li>
+          </ul>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">services/worker/src/jobs/sweep-expired-sessions.ts (new)</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln add">+export async function sweepExpiredSessions(clock: SessionClock = systemClock): Promise&lt;number&gt; {</span>
+<span class="ln add">+  const now = clock.now();</span>
+<span class="ln add">+  let deleted = 0;</span>
+<span class="ln add">+</span>
+<span class="ln add">+  for (let batch = 0; batch &lt; MAX_BATCHES_PER_RUN; batch++) {</span>
+<span class="ln add">+    const rows = await db</span>
+<span class="ln add">+      .delete(sessions)</span>
+<span class="ln add">+      .where(and(isNull(sessions.revokedAt), lte(sessions.expiresAt, now)))</span>
+<span class="ln add">+      .limit(BATCH_SIZE)</span>
+<span class="ln add">+      .returning({ id: sessions.id });</span>
+<span class="ln add">+</span>
+<span class="ln add">+    deleted += rows.length;</span>
+<span class="ln add">+    if (rows.length &lt; BATCH_SIZE) break;</span>
+<span class="ln add">+  }</span>
+<span class="ln add">+</span>
+<span class="ln add">+  metrics.counter('sessions_swept_total').inc(deleted);</span>
+<span class="ln add">+  return deleted;</span>
+<span class="ln add">+}</span></pre>
+          </div>
+
+          <p class="mb-3 max-w-[75ch]">The ceiling is 50 × 1000 rows per run, four runs an hour, so the
+            1.4M-row backlog takes roughly seven hours to clear after deploy. That is what the Grafana panel
+            linked at the top is for — the table size should visibly fall, then flatten.</p>
+          <p class="mb-3 max-w-[75ch]">The <code>where</code> clause is exactly what
+            <code>sessions_expires_at_idx</code> from Chapter 1 indexes, including the
+            <code>revoked_at is null</code> predicate. The index and the query were written as a pair;
+            changing one without the other turns this into a sequential scan over the whole table.</p>
+          <p class="max-w-[75ch]">Registration adds <code>lockTtlMs: 10 * 60 * 1000</code> alongside the
+            cron. That is the scheduler's existing advisory-lock timeout — worker runs three replicas, and
+            without it two of them could sweep at once. Ten minutes is generous for a run that takes
+            seconds, and it is deliberately shorter than the 15-minute cron so a crashed run does not block
+            the next one forever.</p>
+        </div>
+      </section>
+
+      <section id="ch-clock-plumbing" class="chapter mb-10 scroll-mt-4">
+        <header class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-2">
+          <h2 class="grow text-2xl font-semibold">Threading the clock to the call sites</h2>
+          <span class="rounded-full border border-line px-2 py-0.5 text-xs text-muted">mechanical</span>
+          <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
+            <input type="checkbox" data-viewed class="cursor-pointer accent-accent"> viewed
+          </label>
+        </header>
+
+        <div class="chapter-body">
+          <p class="mb-4 max-w-[75ch]">Chapter 1 made <code>now</code> an argument. This is the consequence:
+            the same optional parameter added at seven call sites, plus a <code>TestClock</code> helper.
+            There is no decision in here — every edit is the same shape, and all of them pass
+            <code>systemClock</code> by default, so nothing outside tests changes behaviour.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">services/api/src/routes/auth/login.ts:38 — and six more exactly like it</div>
+            <pre class="diff overflow-x-auto py-2 text-[0.8rem] leading-relaxed"><span class="ln del">-    const { token } = await createSession({ userId: user.id });</span>
+<span class="ln add">+    const { token } = await createSession({ userId: user.id }, app.clock);</span></pre>
+          </div>
+
+          <p class="max-w-[75ch]"><code>app.clock</code> is <code>systemClock</code> in production, decorated
+            once in <code>services/api/src/plugins/clock.ts</code>. The API's integration tests swap in a
+            <code>TestClock</code>, which is how <code>expiry.e2e.test.ts</code> asserts the
+            <code>X-Session-Expired</code> header without waiting a day. The other six sites are the same
+            substitution in <code>sso-callback.ts</code>, <code>impersonate.ts</code>, <code>logout.ts</code>,
+            <code>touchSession()</code>, <code>revokeSession()</code>, and the worker's job registration.
+            Read one, you have read all seven.</p>
+        </div>
+      </section>
+
+      <section id="ch-try-it" class="chapter mb-10 scroll-mt-4">
+        <header class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-2">
+          <h2 class="grow text-2xl font-semibold">How to check this yourself</h2>
+          <span class="rounded-full border border-line px-2 py-0.5 text-xs text-muted">verification</span>
+          <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
+            <input type="checkbox" data-viewed class="cursor-pointer accent-accent"> viewed
+          </label>
+        </header>
+
+        <div class="chapter-body">
+          <p class="mb-4 max-w-[75ch]">Fastest path to seeing the behaviour: run the tests, then hand-expire
+            your own session in the database and watch the browser react.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">set up and run the tests</div>
+            <pre class="overflow-x-auto px-3 py-2 text-[0.8rem] leading-relaxed">bun install
+bun run --cwd packages/db migrate     # applies 0031_session_expires_at
+
+bun test packages/auth/src/__tests__/session.test.ts
+bun test services/worker/src/jobs/__tests__/sweep-expired-sessions.test.ts
+bun test services/api/src/__tests__/expiry.e2e.test.ts
+bun run typecheck                     # proves every SessionResult switch is exhaustive</pre>
+          </div>
+
+          <p class="mb-2 max-w-[75ch]"><strong>See the header for yourself.</strong> Sign in through the UI,
+            copy the <code>acme_session</code> cookie out of DevTools, then expire the row by hand.</p>
+
+          <div class="my-4 overflow-hidden rounded-lg border border-line bg-card">
+            <div class="border-b border-line px-3 py-1.5 font-mono text-xs text-muted">expire it, then call the API</div>
+            <pre class="overflow-x-auto px-3 py-2 text-[0.8rem] leading-relaxed">psql "$DATABASE_URL" -c "update sessions set expires_at = now() - interval '1 minute'
+                         where user_id = (select id from users where email = 'you@acme.dev');"
+
+curl -i --cookie "acme_session=$TOKEN" http://localhost:3001/api/v1/me
+# expect: 401, X-Session-Expired: 1, {"error":"session_expired"}</pre>
+          </div>
+
+          <p class="mb-3 max-w-[75ch]">Then do the same for a session you <em>revoke</em> instead
+            (<code>set revoked_at = now()</code>) and confirm there is <strong>no</strong> header and the
+            body says <code>unauthenticated</code>. That contrast is the whole point of Chapter 2.</p>
+
+          <p class="mb-3 max-w-[75ch]"><strong>In the browser.</strong> With the dev servers running, sign
+            in, leave the dashboard open, run the <code>update</code> above, then click any nav item. Expect
+            exactly one toast and a single redirect to <code>/login?reason=expired</code> with the banner
+            above the form. Several toasts means the <code>handled</code> ref is not doing its job.</p>
+
+          <p class="mb-3 max-w-[75ch]"><strong>Confirm CORS is right.</strong> Comment out
+            <code>'X-Session-Expired'</code> in <code>app.ts</code>, repeat the browser step, and you should
+            get the old silent bounce with no toast. That is the failure mode the line prevents, and
+            <code>curl</code> cannot show it to you.</p>
+
+          <p class="max-w-[75ch]"><strong>The sweeper, without waiting 15 minutes:</strong>
+            <code>bun run --cwd services/worker job:once -- sweep-expired-sessions</code>, then count rows
+            where <code>expires_at &lt;= now() and revoked_at is null</code> — expect 0 locally. Visual
+            review only: <code>bun run storybook</code>, stories <code>Auth/SessionExpiredToast</code> and
+            <code>Auth/SessionExpiredBanner</code>.</p>
+        </div>
+      </section>
+
+      <details id="coverage" class="scroll-mt-4 text-[0.85rem] text-muted">
+        <summary class="cursor-pointer font-semibold text-fg">Every changed file, and where it went</summary>
+        <table class="mt-2 w-full border-collapse">
+          <tr><td class="py-0.5 pr-3 align-top"><code>packages/db/src/schema/sessions.ts</code></td><td class="py-0.5 align-top">Ch 1</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>packages/db/migrations/0031_session_expires_at.sql</code></td><td class="py-0.5 align-top">Ch 1</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>packages/auth/src/clock.ts</code>, <code>ttl.ts</code>, <code>session.ts</code></td><td class="py-0.5 align-top">Ch 1</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>packages/auth/src/__tests__/session.test.ts</code></td><td class="py-0.5 align-top">Ch 1</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>services/api/src/plugins/authenticate.ts</code></td><td class="py-0.5 align-top">Ch 2</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>services/api/src/app.ts</code></td><td class="py-0.5 align-top">Ch 2 (CORS)</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>apps/web/src/lib/api-client.ts</code></td><td class="py-0.5 align-top">Ch 2</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>apps/web/src/app/session-expiry-boundary.tsx</code></td><td class="py-0.5 align-top">Ch 2</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>apps/web/src/app/login/page.tsx</code></td><td class="py-0.5 align-top">Ch 2</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>services/worker/src/jobs/sweep-expired-sessions.ts</code>, <code>index.ts</code></td><td class="py-0.5 align-top">Ch 3</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>services/worker/src/jobs/__tests__/sweep-expired-sessions.test.ts</code></td><td class="py-0.5 align-top">Ch 3</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>packages/auth/src/testing/test-clock.ts</code></td><td class="py-0.5 align-top">Ch 4</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>services/api/src/plugins/clock.ts</code> + 4 route call sites</td><td class="py-0.5 align-top">Ch 4</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top"><code>services/api/src/__tests__/expiry.e2e.test.ts</code></td><td class="py-0.5 align-top">Ch 4</td></tr>
+          <tr><td class="py-0.5 pr-3 align-top">19 × Prettier-only reformat, <code>bun.lock</code>, <code>_journal.json</code></td><td class="py-0.5 align-top">demoted</td></tr>
+        </table>
+      </details>
+
+      <details id="appendix" class="mt-4 scroll-mt-4 text-sm text-muted">
+        <summary class="cursor-pointer font-semibold">Appendix: mechanical &amp; demoted changes</summary>
+        <ul class="my-2 list-disc pl-5">
+          <li><strong>Prettier sweep — 19 files, ~230 of the 612 added lines.</strong>
+            <code>.prettierrc</code> gained <code>"singleAttributePerLine": false</code> on
+            <code>main</code> last week and this is the first branch to run <code>bun run format</code>
+            since. All 19 are under <code>apps/web/src/components/</code> and none are otherwise touched.
+            <code>git show --stat -w</code> collapses them to zero.</li>
+          <li><strong><code>bun.lock</code> — +146 −98.</strong> No new direct dependencies;
+            <code>bun install</code> re-resolved transitives after the <code>main</code> merge.
+            <code>package.json</code> files are unchanged.</li>
+          <li><code>packages/db/migrations/meta/_journal.json</code> — generated by
+            <code>drizzle-kit</code>, one entry appended for migration 0031.</li>
+        </ul>
+      </details>
+
+    </main>
+  </div>
+</div>
+
+<div id="spBubble" class="sp-bubble" role="dialog" aria-label="Comment on selection" hidden>
+  <div id="spQuote" class="sp-quote"></div>
+  <textarea id="spInput" class="sp-in" rows="2" aria-label="Your comment"
+    placeholder="Note on the selected text…"></textarea>
+  <div class="sp-row">
+    <span class="sp-hint">Enter saves · Esc discards</span>
+    <button type="button" id="spSave" class="sp-btn" aria-label="Save comment">Save</button>
+  </div>
+</div>
+
+<aside id="spPanel" class="sp-panel sp-min" aria-label="Scratchpad">
+  <div class="sp-head">
+    <button type="button" id="spToggle" class="sp-ttl" aria-expanded="false" aria-controls="spBody">
+      <span class="sp-caret" aria-hidden="true">&#9662;</span> Scratchpad
+      <span id="spCount" class="sp-badge">0</span>
+    </button>
+    <button type="button" id="spCopy" class="sp-btn" aria-label="Copy all notes as AI instructions">Copy to AI</button>
+  </div>
+  <div id="spBody" class="sp-body">
+    <ul id="spList" class="sp-list"></ul>
+    <p id="spEmpty" class="sp-empty">Select any text on the page to leave a note.</p>
+  </div>
+</aside>
+
+<script>
+/* Scroll bar, "N / M viewed" counter, outline scrollspy. The viewed checkbox itself
+   is pure CSS (:has) and stores nothing — a reload clears it. */
+(function () {
+  var bar = document.getElementById('prsProgress');
+  addEventListener('scroll', function () {
+    var h = document.documentElement;
+    bar.style.width = ((h.scrollTop / ((h.scrollHeight - h.clientHeight) || 1)) * 100).toFixed(1) + '%';
+  }, { passive: true });
+
+  var boxes = [].slice.call(document.querySelectorAll('input[data-viewed]'));
+  var countEl = document.getElementById('prsViewedCount');
+  function outlineItem(id) {
+    var a = document.querySelector('.prs-outline a[href="#' + id + '"]');
+    return a ? a.parentElement : null;
+  }
+  function refresh() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    countEl.textContent = done + ' / ' + boxes.length + ' chapters viewed';
+  }
+  boxes.forEach(function (b) {
+    var ch = b.closest('.chapter');
+    b.addEventListener('change', function () {
+      var li = outlineItem(ch.id);
+      if (li) li.classList.toggle('opacity-50', b.checked);
+      refresh();
+    });
+  });
+  refresh();
+
+  var links = {};
+  document.querySelectorAll('.prs-outline a[href^="#"]').forEach(function (a) {
+    links[a.getAttribute('href').slice(1)] = a;
+  });
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting || !links[e.target.id]) return;
+      Object.keys(links).forEach(function (k) { links[k].classList.remove('font-bold'); });
+      links[e.target.id].classList.add('font-bold');
+    });
+  }, { rootMargin: '-10% 0px -70% 0px' });
+  document.querySelectorAll('.chapter[id]').forEach(function (el) { io.observe(el); });
+})();
+
+/* Scratchpad: select text anywhere, type a note, collect them in the corner panel,
+   copy the lot as markdown for an AI agent. In memory only, by design. */
+(function () {
+  var MAX = 150, MIN = 3;
+  var TIGHT = 'pre,li,p,td,th,h1,h2,h3,h4,blockquote,summary,figcaption,dd,dt';
+  var bubble = document.getElementById('spBubble'), input = document.getElementById('spInput'),
+      quote = document.getElementById('spQuote'), panel = document.getElementById('spPanel'),
+      list = document.getElementById('spList'), countEl = document.getElementById('spCount'),
+      empty = document.getElementById('spEmpty'), copyBtn = document.getElementById('spCopy'),
+      toggle = document.getElementById('spToggle');
+  var items = [], seq = 0, pending = null, editing = 0, drafts = {}, focusEdit = false;
+  var downInUI = false, kTimer = 0, flashT = 0, COPY_LABEL = copyBtn.textContent;
+
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+  function btn(label, aria, fn) {
+    var b = el('button', 'sp-btn', label);
+    b.type = 'button';
+    b.setAttribute('aria-label', aria);
+    b.addEventListener('click', fn);
+    return b;
+  }
+  function elem(n) { return n.nodeType === 1 ? n : n.parentElement; }
+  function dirty() { return input.value.trim() !== ''; }
+
+  /* Context comes from the Range itself, never from searching textContent — repeated
+     lines like `if (!token)` would match the wrong one. Tightest block per side, so a
+     selection spanning two paragraphs cannot swallow the whole page (or this panel). */
+  function inUI(n) { var e = elem(n); return !!e && (panel.contains(e) || bubble.contains(e)); }
+  function blockFor(node) {
+    var e = elem(node), b = e && e.closest(TIGHT);
+    if (b && /^T[DH]$/.test(b.tagName)) b = b.closest('tr') || b;
+    if (!b || b.contains(panel) || b.contains(bubble) || inUI(b)) return null;
+    return b;
+  }
+  /* Dragging past the page and releasing on the panel would otherwise capture the
+     panel's own text — and every note already in it. Cut the range at the last block. */
+  function clamp(r) {
+    var b;
+    if (inUI(r.endContainer) && (b = blockFor(r.startContainer))) {
+      var x = r.cloneRange(); x.setEnd(b, b.childNodes.length); return x;
+    }
+    if (inUI(r.startContainer) && (b = blockFor(r.endContainer))) {
+      var y = r.cloneRange(); y.setStart(b, 0); return y;
+    }
+    return r;
+  }
+  function sideText(block, r, atStart) {
+    if (!block) return '';
+    var x = document.createRange();
+    x.selectNodeContents(block);
+    try {
+      if (atStart) x.setEnd(r.startContainer, r.startOffset);
+      else x.setStart(r.endContainer, r.endOffset);
+    } catch (e) { return ''; }
+    var s = x.toString();
+    if (!block.closest('pre')) s = s.replace(/\s+/g, ' ');
+    return atStart ? s.slice(-MAX) : s.slice(0, MAX);
+  }
+  function whereOf(node) {
+    var e = elem(node), ided = e && e.closest('[id]'), ch = e && e.closest('.chapter');
+    var h = ch && ch.querySelector('h2');
+    return (h ? h.textContent.trim() : document.title || 'Report') +
+      (ided ? ' · #' + ided.id : '') + (e && e.closest('pre') ? ' · code' : '');
+  }
+  function rectOf(r) {
+    var rc = r.getClientRects(), t = rc.length ? rc[rc.length - 1] : r.getBoundingClientRect();
+    if (t.width || t.height) return t;
+    var c = { left: innerWidth / 2 - 144, top: innerHeight / 2 - 60 };
+    c.bottom = c.top;
+    return c;
+  }
+  function capture() {
+    var s = getSelection();
+    if (!s || !s.rangeCount || s.isCollapsed) return null;
+    var r = clamp(s.getRangeAt(0)), txt = r.toString(), root = r.commonAncestorContainer;
+    if (txt.trim().length < MIN || panel.contains(root) || bubble.contains(root)) return null;
+    return {
+      text: txt,
+      before: sideText(blockFor(r.startContainer), r, true),
+      after: sideText(blockFor(r.endContainer), r, false),
+      where: whereOf(r.startContainer),
+      rect: rectOf(r)
+    };
+  }
+
+  function open(p) {
+    pending = p;
+    input.value = '';
+    quote.textContent = p.text.length > 120 ? p.text.slice(0, 120) + '…' : p.text;
+    bubble.hidden = false;
+    var w = bubble.offsetWidth || 288, h = bubble.offsetHeight || 120, r = p.rect;
+    var left = Math.min(Math.max(8, r.left), Math.max(8, innerWidth - w - 8));
+    var top = r.bottom + 8;
+    if (top + h > innerHeight - 8) top = Math.max(8, r.top - h - 8);
+    bubble.style.left = (left + scrollX) + 'px';
+    bubble.style.top = (top + scrollY) + 'px';
+    input.focus();
+  }
+  function close() { bubble.hidden = true; pending = null; }
+
+  /* A typed note is never thrown away by a stray click — only Escape discards it. */
+  function maybeOpen() {
+    setTimeout(function () {
+      var p = capture();
+      if (p) { if (bubble.hidden || !dirty()) open(p); }
+      else if (!dirty()) close();
+    }, 0);
+  }
+  function save() {
+    var v = input.value.trim();
+    if (!pending || !v) return;
+    pending.id = ++seq;
+    pending.note = v;
+    items.push(pending);
+    close();
+    getSelection().removeAllRanges();
+    panel.classList.remove('sp-min');
+    toggle.setAttribute('aria-expanded', 'true');
+    render();
+  }
+
+  function render() {
+    countEl.textContent = items.length;
+    empty.hidden = items.length > 0;
+    list.textContent = '';
+    var focusMe = null;
+    items.forEach(function (it) {
+      var li = el('li', 'sp-item'), acts = el('div', 'sp-acts');
+      li.appendChild(el('div', 'sp-where', it.where));
+      li.appendChild(el('div', 'sp-quote', it.text));
+      if (editing === it.id) {
+        var ta = el('textarea', 'sp-in');
+        ta.rows = 3;
+        ta.value = drafts[it.id] != null ? drafts[it.id] : it.note;
+        ta.setAttribute('aria-label', 'Edit comment');
+        ta.addEventListener('input', function () { drafts[it.id] = ta.value; });
+        var commit = function () {
+          var v = ta.value.trim();
+          if (v) it.note = v;
+          delete drafts[it.id];
+          editing = 0;
+          render();
+        };
+        var cancel = function () { delete drafts[it.id]; editing = 0; render(); };
+        ta.addEventListener('keydown', function (e) {
+          if (e.isComposing || e.keyCode === 229) return;
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit(); }
+          else if (e.key === 'Escape') { e.stopPropagation(); cancel(); }
+        });
+        li.appendChild(ta);
+        acts.appendChild(btn('Save', 'Save edited comment', commit));
+        acts.appendChild(btn('Cancel', 'Cancel editing', cancel));
+        focusMe = ta;
+      } else {
+        li.appendChild(el('div', 'sp-note', it.note));
+        acts.appendChild(btn('Edit', 'Edit comment', function () {
+          editing = it.id; focusEdit = true; render();
+        }));
+        acts.appendChild(btn('Delete', 'Delete comment', function () {
+          items = items.filter(function (x) { return x !== it; });
+          delete drafts[it.id];
+          render();
+        }));
+      }
+      li.appendChild(acts);
+      list.appendChild(li);
+    });
+    if (focusMe && focusEdit) { focusMe.focus(); focusEdit = false; }
+  }
+
+  function fence(s) {
+    var n = 3, m = s.match(/`{3,}/g);
+    if (m) m.forEach(function (x) { if (x.length >= n) n = x.length + 1; });
+    return new Array(n + 1).join('`');
+  }
+  function markdown() {
+    var out = ['# Notes on: ' + (document.title || 'PR walkthrough'), '',
+      items.length + ' note(s) left while reading this PR walkthrough. Each one quotes the passage ' +
+      'selected, where it sits in the report, and what to do about it. In the context block, ' +
+      '⟦ ⟧ wraps the selection. Treat every "Note:" as an instruction.', ''];
+    items.forEach(function (it, i) {
+      var body = (it.before ? '…' + it.before : '') + '⟦' + it.text + '⟧' +
+                 (it.after ? it.after + '…' : '');
+      var f = fence(body + it.text);
+      out.push('---', '', '## ' + (i + 1) + '. ' + it.where, '',
+        'Selected:', '> ' + it.text.replace(/\n/g, '\n> '), '',
+        'Context:', f, body, f, '', 'Note:', it.note, '');
+    });
+    return out.join('\n');
+  }
+  function flash(msg) {
+    copyBtn.textContent = msg;
+    clearTimeout(flashT);
+    flashT = setTimeout(function () { copyBtn.textContent = COPY_LABEL; }, 1200);
+  }
+  function copyAll() {
+    if (!items.length) return flash('Nothing yet');
+    var text = markdown();
+    var fallback = function () {
+      var ta = el('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+      flash(ok ? 'Copied ✓' : 'Copy failed');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { flash('Copied ✓'); }, fallback);
+    } else fallback();
+  }
+
+  document.addEventListener('mousedown', function (e) {
+    downInUI = bubble.contains(e.target) || panel.contains(e.target);
+    if (!downInUI && !dirty()) close();
+  }, true);
+  document.addEventListener('mouseup', function () { if (!downInUI) maybeOpen(); });
+  document.addEventListener('keyup', function (e) {
+    if (bubble.contains(e.target) || panel.contains(e.target)) return;
+    if (!(e.shiftKey || ((e.metaKey || e.ctrlKey) && e.key === 'a'))) return;
+    clearTimeout(kTimer);
+    kTimer = setTimeout(maybeOpen, 600);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !bubble.hidden) { close(); getSelection().removeAllRanges(); }
+  });
+  addEventListener('scroll', function () { if (!bubble.hidden && !dirty()) close(); }, { passive: true });
+  input.addEventListener('keydown', function (e) {
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+  });
+  document.getElementById('spSave').addEventListener('click', save);
+  copyBtn.addEventListener('click', copyAll);
+  toggle.addEventListener('click', function () {
+    toggle.setAttribute('aria-expanded', String(!panel.classList.toggle('sp-min')));
+  });
+  render();
+})();
+
+/* Reveal once Tailwind has compiled; the timeout keeps the page readable if the CDN is unreachable. */
+(function () {
+  var ready = function () { document.documentElement.classList.add('ready'); };
+  addEventListener('DOMContentLoaded', function () { requestAnimationFrame(ready); });
+  setTimeout(ready, 2000);
+})();
+</script>
+
+</body>
+</html>
