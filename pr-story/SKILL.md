@@ -9,10 +9,20 @@ GitHub's UI for reading a PR is not good, human-centric UX. It displays changes 
 
 Your mission is to eliminate that cognitive load. Create a HTML page for the human to read, that presents the PR broken down into a sequence of easy to follow chapters. 
 
+This page is a precursor, not a replacement: the reader will still open the real diff on GitHub. Completeness is GitHub's job; yours is the story. A file that isn't part of the story simply doesn't appear on the page — no inventory, no accounting for what was left out.
+
 Analyze the changes, take into account the context and architecture, and if possible, use MCP servers to read the Jira ticket to learn more about the intent.
 
+- Skill structures are templates, not checklists. Every section below is optional — skip what doesn't apply rather than filling it with filler.
+- Length scales with surprise, not with diff size. A 4,000-line mechanical rename earns three sentences and a table; a 40-line behaviour change may earn a full chapter.
+- Cut test for every paragraph: does it change what the reviewer does next? If not, delete it.
+- If the whole point fits in 3 sentences, the artifact is barely longer than that: header, moral, one visual, done.
+
 ## Tone of voice
-This MUST NOT sound like a dry legal/technical document. It should explain conceptually what has changed, in a friendly way like a senior teaching a junior. Short sentences, human sounding, pragmatic, concise and plainspoken, like explaining to a colleague.
+This MUST NOT sound like a dry legal/technical document. It should explain conceptually what has changed, in a friendly way like a senior teaching a junior. Short sentences, human sounding, pragmatic, concise and plainspoken, like explaining to a colleague. If a sentence would fit in a scientific paper or an audit report, rewrite it in spoken words or delete it.
+
+bad:  "This refactoring consolidates the type definitions to ensure consistency across both API integration layers."
+good: "There are 2 APIs but only 1 shared type. This makes the second API use it too."
 
 Build a story, tell a narrative. Iteratively onboard the reader to the problem-space. Explain what things are. Give concrete examples, not abstract or imperative language. Use HTML or SVG drawings to visually represent what you are explaining.
 
@@ -26,28 +36,28 @@ In the GitHub PR UI, the reader is presented with a dry, alphabetic code dump. T
 
 1. Checkout, or pull PR stats, listing and metadata, so that you can be careful about accidentally reading a huge diff wholesale.
 2. Read the PR description and the associated Jira ticket (if any).
-3. Demote lockfiles, vendored deps, `dist/`, generated code, snapshots, formatting and license sweeps. Huge changesets, that are usually irrelevant to the goal of understanding the PR.
+3. Silently drop lockfiles, vendored deps, `dist/`, generated code, snapshots, formatting and license sweeps. Huge changesets, usually irrelevant to understanding the PR — they get no mention on the page.
 4. Define a table of contents
 5. Write each chapter independently. Use sub-agents to do grunt-work, research and gather the needed information for each and explore its effects and dependencies.
-6. Write a top-level introduction the the document.
+6. Write a top-level introduction to the document.
 7. As the last chapter, write any suggestions for how the reviewer can test the changes. What commands they may want to run, or UI actions they can take to replicate the issue.
-8. Use a sub-agent to review and analyze the resulting document, with the goal to see if anything needs to be reordered or reworded in order to make the readability flow easier.
-9. Spin up a sub agent to generate the "Hero Illustration".
+8. Use a sub-agent to review the resulting document as an editor whose first job is cutting: delete sentences that restate the diff, sections with nothing real in them, and chapters that could be a single list item — then check the reading order and flow.
+9. Spin up illustrator sub-agents in parallel: one for the hero, one per chapter (see Illustrations).
 10. Open the HTML file in the system default browser: `open /tmp/pr-story.html`.
 
 ### Introduction to the PR
 
 This is possibly the most important step - reading the abstract is when the human's attention is at its sharpest, but their knowledge of the intent at the lowest. 
 
-The description should start with an explanation of WHY this was done - what is the use case and the problem it solves. The description should assume a low-technical level of understanding, and focus on the problem, and the approach to the solution, calling out the details by name only where unavoidable. The description should focus on what this part of the system is and why the change exists, what is the intended behaviour before vs after.
+Lead with the moral of the story — one plain sentence a colleague would say out loud: "There are 2 APIs but only 1 shared type in our codebase; this PR fixes that." If the reviewer reads nothing else, this sentence must carry the PR. Everything after it is optional support, in WHY-first order: the problem, then the approach, calling out details by name only where unavoidable.
 
-1. The first paragraph should explain in two simple sentences, in non-technical terms, what the purpose of the task was, and where the boundaries of its scope are.
-2. Then, create line items for large actions that were performed, grouping related changes together. For example:
+1. The first paragraph is two simple sentences, non-technical: the purpose, and where the scope boundary is. Often the moral IS the whole paragraph — stop there.
+2. Line items only if the PR genuinely did several separate things. For example:
    - Handlers were moved into a specific folder for better organization.
-   - Error handlers were added to all APIs that were missing them, improving error handling across the board.
-3. Finally, write down any additional details or exceptions where the implementation deviates from the original plan. This can include any challenges faced during development, any trade-offs made, or any future considerations that should be kept in mind when working with this code. This section can also include any relevant technical details that may be useful for reviewers or future developers who will work on this codebase.
-4. If available, add relevant links, to Jira tickets, Figma designs, Chromatic or local Storybook pages, local or preview API docs url or any other relevant resources that provide context for the changes made in this PR. This helps reviewers understand the background and motivation behind the changes.
-5. Inline any relevant hand-written SVG, ASCII diagrams, Figma frames or images that help reviewers visualize the change without running the code.
+   - Error handlers were added to all APIs that were missing them.
+3. Deviations from the plan, trade-offs, challenges — only if they actually happened. Most PRs have none; skip the section entirely rather than writing "no major trade-offs were made".
+4. Links to Jira tickets, Figma, Storybook, API docs — only ones that exist, as a bare link list.
+5. Inline a hand-written SVG, ASCII diagram, Figma frame or image if it lets the reviewer see the change without running the code.
 
 ### Table of Contents
 
@@ -59,7 +69,7 @@ The size of the PR doesn't dictate how many chapters it has. Some huge PRs may b
 
 ### Writing a Chapter
 
-A chapter should intenrally focus on telling its own story. Each chapter has a title, that in less than 50 characters explains the intent/effect. And a description which starts non-technical and becomes more technical as it goes deeper into the details. It may also be useful to use HTML or SVG to make small illustrations or cards as a visual aid.
+A chapter should internally focus on telling its own story. Each chapter has a title, that in less than 50 characters explains the intent/effect. And a description which starts non-technical and becomes more technical as it goes deeper into the details. It may also be useful to use HTML or SVG to make small illustrations or cards as a visual aid.
 
 After the description of a chapter, you can provide a short quick and dirty list of biggest changes in this chapter, just 3-6 items as an overview of what they'll see below, such as:
 - introduced the new `SearchOfferingContext` model
@@ -69,30 +79,36 @@ After the description of a chapter, you can provide a short quick and dirty list
 
 Finally, we jump into the details of the implementation. Here you thread paragraphs and code blocks together. The reader is technical - but do not assume knowledge of the codebase.
 
-A chapter should be classified between simply mechanical or changes business logic. This is because logic change (such as Interface Changes) are where explanation matters the most to the reader. A mechanical chapter rarely needs the subsequent detailed deep dive, while business logic changes may need the user to understand why and how things are changed. Its up to your taste to decide what is relevant. Be conservative, nobody likes a useless wall of text that simply restates what the code does.
+Classify each chapter as mechanical or business-logic, and let that pick its shape:
 
-In this part, work out what the touched subsystem is — the thing a newcomer can't get from changed lines. Read the surrounding module, its entry points, a README, usages. Analyse and present the influence, dependencies and side effects changes have, and provide short examples in a table, where it helps tell the story.
+- **Mechanical** (renames, moves, dependency bumps, formatting): title + two sentences + the quick list. No deep dive, no code blocks. Done.
+- **Business logic** (behaviour, interfaces, data shape): this is where explanation matters and the full treatment below applies.
+
+Be conservative with the classification — nobody likes a wall of text that restates what the code does, and most chapters in most PRs are closer to mechanical than they feel while you're writing them.
+
+For business-logic chapters, work out what the touched subsystem is — the thing a newcomer can't get from changed lines. Read the surrounding module, its entry points, a README, usages. Present the dependencies and side effects only when the blast radius is real; if nothing outside the diff is affected, say so in one sentence and move on.
 
 **Ground rules:**
 - Nothing is referenced before it's introduced. The reader never meets a symbol whose definition hasn't appeared yet.
 - Why, not what. The diff already shows what changed. Prose is for intent, consequences, and relationships. Example: "Before this, a session stayed valid until the user logged out. This adds a 24h TTL so abandoned sessions can't be replayed. The TTL is measured from `createdAt` rather than `lastSeenAt`, so it fires 24h after sign-in whether or not the user is still active." Old behaviour, new behaviour, then the detail the diff can't show.
 - Who uses it? Grep the changed symbols across the repo *outside* the diff: callers, dependents, config. This blast radius is what separates the page from a file listing, and it's what a newcomer most needs.
-- Noise is demoted, the goal is to help understand the PR, not offer a definitive list.
+- Noise is omitted, silently. The goal is to help understand the PR, not offer a definitive list — the reader has GitHub for that.
 - Use the project's own layered architecture language.
 - Create hyperlinks to relevant files or concepts.
 - Use hover-tooltips to quickly explain domain concepts in banal plain-language where needed.
 - Within a chapter, dependency order — schema → types → logic → call sites → UI → config — with tests beside the code they cover, never batched at the end.
 - Write prose the way you'd explain the change out loud: short sentences, plain words, the point of a paragraph in its first sentence, the project's own vocabulary. Name the actual value, call site or field instead of describing it in general terms.
 
-### PR Hero Illustration
+### Illustrations
 
-Every good blogpost starts with a custom made illustrated hero that exemplifies the soul of the blogpost. And so should a PR!
+Every good blogpost starts with a custom made illustrated hero that exemplifies the soul of the blogpost. Skillshare explains math with small inline illustrations for every task. And so should a PR!
 
-Each PR should have at least 1 serious hero visualization placed at the top, just below the introduction segment.
+- **One hero** at the top, just below the introduction: a slide-sized, boundaried, contained card that visualizes the most important concept of the PR's intent.
+- **At least one small illustration per chapter**: a compact inline figure that shows the chapter's mechanism — the before/after, the data flow, the decision, the shape of the move. Scale it to the chapter: a business-logic chapter may earn a rich or interactive piece; a mechanical chapter gets a tiny strip (e.g. an animated directory tree of files moving). The test is the same as for prose: the figure must show something the reader would otherwise have to reconstruct in their head. A diagram that merely decorates is worse than none.
 
-Use HTML, CSS or Canvas or SVG - with animations to produce it, ideally inline, but allowed to use CDN libraries. It should be a slide-sized, boundaried, contained, hero card, that visualizes the most important concept of the PR's intent. 
+Use HTML, CSS, Canvas or SVG - with animations, ideally inline, but allowed to use CDN libraries.
 
-**Always Spin up a sub agent to do this work as a standalone change. A sub agent is an artist, a technology creative**
+**Always spin up sub agents to do this work as standalone changes** — one for the hero, and one per chapter, briefed in parallel. A sub agent is an artist, a technology creative - explain the problem space to it, with the chapter's concept, relevant context and pointers, and let it do its magic.
 
 For example, in a pr that reorganizes code, you might wanna draw a symbolic directory tree before and after, where files are animated to move around. A PR that deals with utilities and math, you may wanna draw some items on a grid system, or an illustration of what the utility does. The illustrations can even be interactive where that makes sense. Be creative here!
 
@@ -107,7 +123,6 @@ The page has this shape, top to bottom. Keep the order; drop anything you can't 
 1. **Header** — title, a metadata line, and the 2-3 sentence blurb.
 2. **What's in here** — the introduction described above, with its visual.
 3. **Chapters**, with the outline beside them.
-4. **Appendices** — Appendix accounting for the demoted noise + why each block/file is noise.
 
 **Binary Images:** never let an image, or its base64, into your own context. Write a placeholder in the HTML and let one command swap the bytes in. Use `@@IMG:name@@` inside `src="…"` for raster images, and `@@SVG:name@@` standing alone where the element goes for SVG — that one is inlined as live markup, so it inherits the page's `--fg`/`--accent` colours.
 
