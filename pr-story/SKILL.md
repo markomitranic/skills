@@ -48,8 +48,8 @@ In the GitHub PR UI, the reader is presented with a dry, alphabetic code dump. T
 5. Write each chapter independently. Use sub-agents to do grunt-work, research and gather the needed information for each and explore its effects and dependencies.
 6. Write a top-level introduction to the document.
 7. As the last chapter, write any suggestions for how the reviewer can test the changes. What commands they may want to run, or UI actions they can take to replicate the issue.
-8. Use a sub-agent to review the resulting document as an editor whose first job is cutting: delete sentences that restate the diff, sections with nothing real in them, and chapters that could be a single list item — then check the reading order and flow.
-9. Spin up illustrator sub-agents in parallel: one for the hero, one per chapter (see Illustrations).
+8. Spin up an editor sub-agent (Opus) whose first job is cutting. Give it the HTML file path and have it make every cut itself with Edit tools: delete sentences that restate the diff, sections with nothing real in them, chapters that could be a single list item — then fix reading order and flow in place. It returns a one-paragraph note of what it changed, never the document. Do not re-read the full file to verify; trust the note.
+9. Spin up illustrator sub-agents (Sonnet) in parallel: one for the hero, one per chapter (see Illustrations).
 10. Open the HTML file in the system default browser: `open /tmp/pr-story.html`.
 
 ### Introduction to the PR
@@ -64,7 +64,7 @@ Lead with the moral of the story — one plain sentence a colleague would say ou
    - Error handlers were added to all APIs that were missing them.
 3. Deviations from the plan, trade-offs, challenges — only if they actually happened. Most PRs have none; skip the section entirely rather than writing "no major trade-offs were made".
 4. Links to Jira tickets, Figma, Storybook, API docs — only ones that exist, as a bare link list.
-5. Inline a hand-written SVG, ASCII diagram, Figma frame or image if it lets the reviewer see the change without running the code.
+5. Inline a hand-drawn figure (HTML/CSS, SVG), ASCII diagram, Figma frame or image if it lets the reviewer see the change without running the code.
 
 ### Table of Contents
 
@@ -113,11 +113,40 @@ Every good blogpost starts with a custom made illustrated hero that exemplifies 
 - **One hero** at the top, just below the introduction: a slide-sized, boundaried, contained card that visualizes the most important concept of the PR's intent.
 - **At least one small illustration per chapter**: a compact inline figure that shows the chapter's mechanism — the before/after, the data flow, the decision, the shape of the move. Scale it to the chapter: a business-logic chapter may earn a rich or interactive piece; a mechanical chapter gets a tiny strip (e.g. an animated directory tree of files moving). The test is the same as for prose: the figure must show something the reader would otherwise have to reconstruct in their head. A diagram that merely decorates is worse than none.
 
-Use HTML, CSS, Canvas or SVG - with animations, ideally inline, but allowed to use CDN libraries.
+**A figure is not necessarily a diagram.** The default failure mode is the dead card — three boxes, two arrows, no life. A figure can be a chart, a toy, a machine the reader operates. Shapes worth stealing (the idea, not the list — it's inspiration, not a menu):
+
+- **Before/after toggle** — one switch flips the whole figure between old and new behaviour. The cheapest interactivity there is, and it fits almost any PR.
+- **Step-through sequence** — a "next" button walks a request through the pipeline one hop at a time, each hop lighting up with a one-line caption.
+- **Tiny chart** — when the PR is about a number: bundle 412→218 KB, 3 queries became 1, backoff capped at 30s. Two bars beat a paragraph.
+- **Live playground** — the PR adds a validator, formatter, slug generator? Reimplement its 10 core lines in JS behind an `<input>` and let the reader type. Nothing explains a regex better.
+- **Payload diff** — the JSON or type shape before and after, changed keys highlighted, hover for the why.
+- **Fake mini-UI** — a postage-stamp replica of the affected screen with the changed element animating; for UI work this beats a screenshot because it can show the motion.
+- **Clickable decision tree** — new branching logic (flags, fallbacks, error paths): the reader picks the conditions and watches the path light up.
+- **Animated file tree** — for moves and renames, entries slide from the old locations to the new ones.
+- **Blast-radius map** — the changed module in the centre, its callers arranged around it, the ones touched by the diff lit up.
+
+The test: the reader should learn something by touching it, or it should show motion the prose can't. If neither applies, a plain static figure is honest and fine — a dead card still beats a fake-interactive one.
+
+**Choosing the medium** is the illustrator's call, per figure — brief it with the concept, never the technology. The bias runs HTML/CSS > SVG > Canvas > raster image, but the shape of the idea decides:
+
+- **HTML/CSS** — the default. Most PR figures are boxes, lists, and arrows-between-things, and that's just markup: a before/after directory tree as two `<ul>`s with entries that slide over on hover, a request pipeline as flex cards with CSS-animated arrows, a config diff as a two-column card. It inherits the page's fonts and colours for free, animates with transitions, and gets interactivity from `:hover` and checkboxes — no script needed.
+- **SVG** — when it's genuinely a *drawing*: curved edges between nodes, precise geometry, a timeline with bezier connectors, a gauge, anything where elements must sit at exact coordinates. If you're fighting flexbox to make lines meet boxes, you wanted SVG.
+- **Canvas** — only for what the first two can't express: hundreds of moving points, a plot generated from data, particle-style motion. Rare in a PR story; needing Canvas is a hint the figure may be too clever.
+- **Raster image** — never drawn, only reused: a screenshot, a Figma export, a Jira attachment that already exists as pixels.
+
+Ideally everything is inline; CDN libraries are allowed when they truly earn their weight.
 
 **Always spin up sub agents to do this work as standalone changes** — one for the hero, and one per chapter, briefed in parallel. A sub agent is an artist, a technology creative - explain the problem space to it, with the chapter's concept, relevant context and pointers, and let it do its magic.
 
-For example, in a pr that reorganizes code, you might wanna draw a symbolic directory tree before and after, where files are animated to move around. A PR that deals with utilities and math, you may wanna draw some items on a grid system, or an illustration of what the utility does. The illustrations can even be interactive where that makes sense. Be creative here!
+Illustrator rules, to keep them fast and cheap:
+
+- Use **Sonnet**. Drawing a figure is well-specced creative gruntwork; it does not need a reasoning model.
+- Each illustrator writes its finished figure — in whatever medium it chose — to its own file (e.g. `/tmp/prs-ch-billing.html`) and returns **only the file path plus one sentence** describing it. The markup itself never travels through a report.
+- Fragments must be self-contained: any styles scoped inside the fragment (a `<style>` block with classes prefixed by the figure's name, or inline styles), no `<html>`/`<body>` wrapper, free to use the page's colour tokens (`--fg`, `--muted`, `--accent`, `--add`/`--del` tints, `--add-ink`/`--del-ink`/`--warn-ink`).
+- **Strong contrast, non-negotiable.** `--add` and `--del` are pale *background tints* — using them as `fill`, `stroke`, or text colour produces invisible marks (`fill: var(--del)` is #ffebe9 on a white card). Anything that carries meaning — text, lines, arrows, icons — is drawn in ink: `--fg`, `--accent`, `--add-ink`, `--del-ink`, `--warn-ink`, all readable on `--bg` and `--card` in both themes. A tint is only ever the wash *behind* ink. Two self-checks: text and strokes should contrast like body text does, and the figure should still read if printed in grayscale.
+- **At most one render-check.** The illustrator may render its figure once to look for clipping or overlap, fix what it sees, and stop. No render-fix-render loops.
+- The main thread places a `@@FIG:name@@` placeholder where the figure goes and inlines all of them in the single swap pass from Rendering — it never opens the figure files.
+
 
 ## Rendering
 
@@ -131,7 +160,7 @@ The page has this shape, top to bottom. Keep the order; drop anything you can't 
 2. **What's in here** — the introduction described above, with its visual.
 3. **Chapters**, with the outline beside them.
 
-**Binary Images:** never let an image, or its base64, into your own context. Write a placeholder in the HTML and let one command swap the bytes in. Use `@@IMG:name@@` inside `src="…"` for raster images, and `@@SVG:name@@` standing alone where the element goes for SVG — that one is inlined as live markup, so it inherits the page's `--fg`/`--accent` colours.
+**Images and figures:** never let an image, its base64, or a figure fragment into your own context. Write a placeholder in the HTML and let one command swap the content in. Use `@@IMG:name@@` inside `src="…"` for raster images, and `@@FIG:name@@` standing alone where the element goes for a markup figure (HTML/CSS fragment or SVG) — those are inlined as live markup, so they inherit the page's `--fg`/`--accent` colours.
 
 Get every image onto disk first: a screenshot already is, a Figma frame comes from `download_assets`, a Jira or GitHub attachment needs `curl -sL "$url" -o /tmp/prs-login.png`. Downscale anything large first (fx gifsicle or `sips -Z 1400 shot.png --out shot-web.png`). Then one pass swaps them all:
 
@@ -142,13 +171,16 @@ for a in sys.argv[2:]:
     tag,src=a.split("=",1); p=pathlib.Path(src)
     if tag not in h: sys.exit("placeholder not in page: "+tag)
     m=subprocess.run(["file","-b","--mime-type",src],capture_output=True,text=True).stdout.strip()
-    v=re.sub(r"^\s*<\?xml.*?\?>\s*","",p.read_text(),flags=re.S).strip() if m=="image/svg+xml" else "data:%s;base64,%s"%(m,base64.b64encode(p.read_bytes()).decode())
+    inline=tag.startswith("@@FIG:") or m=="image/svg+xml"
+    v=re.sub(r"^\s*<\?xml.*?\?>\s*","",p.read_text(),flags=re.S).strip() if inline else "data:%s;base64,%s"%(m,base64.b64encode(p.read_bytes()).decode())
     h=h.replace(tag,v); print("inlined",tag,m,p.stat().st_size,"B")
 f.write_text(h)' /tmp/pr-story.html \
-  '@@IMG:login@@=/tmp/prs-login.png' '@@SVG:flow@@=/tmp/prs-flow.svg'
+  '@@IMG:login@@=/tmp/prs-login.png' '@@FIG:flow@@=/tmp/prs-flow.html'
 ```
 
 It prints one line per image and nothing else. Matching is literal, so `/` `+` `$` `\1` in the payload are harmless, and the MIME type comes from `file` rather than the filename, so an extension-less attachment still gets `data:image/png;base64,…`. A missing placeholder exits non-zero and writes nothing. Do not attempt this with `sed` or `perl -i` — the base64 has to travel as an argument, which blows past macOS's 1 MB `kern.argmax`.
+
+**Context discipline:** the finished page is large, and every re-read of it inflates every subsequent request for the rest of the session. Write each section once and move on. After the editor and the swap pass have run, never read the full file back — verify with targeted checks instead: `grep -c '@@' page.html` must print 0 (no placeholder survived), and `open` it in the browser for the visual once-over. Anything a sub-agent produced goes into the file directly (editor) or via placeholder (illustrators), never through your context.
 
 The template offers some baseline utility hooks. Nothing is persisted — the page is stateless and every toggle resets on reload:
 
@@ -158,6 +190,7 @@ The template offers some baseline utility hooks. Nothing is persisted — the pa
 - `.prs-outline` — outline links, looked up by `href="#id"`
 - `#prsProgress`, `#prsViewedCount` — scroll bar and the "3 / 8 chapters viewed" counter
 - `.diff` + `.ln` — every diff line is its own `<span class="ln add|del|ctx">` inside `<pre class="diff">`. The `<pre>` deliberately does not preserve newlines and each `.ln` re-enables `pre` itself; drop the wrapper and the whole block collapses onto one line. Prefix each line with the real `+`/`-`/space — the class only paints it. Each block sits in a bordered card whose header carries `path:headLine`.
+- `--add-ink` / `--del-ink` / `--warn-ink` — high-contrast counterparts to the `--add`/`--del` background tints; the colour for any text, stroke or icon that means added/removed/careful. The tints themselves are backgrounds only.
 - `.tip` — a `<span class="tip" title="…">` for a hover-tooltip on a domain term
 - `#spPanel` — the scratchpad. The reader selects any text, types a note, and the panel collects it with ±150 characters of surrounding context; "Copy to AI" hands the lot to an agent as markdown. Nothing for you to fill in, but don't delete it.
 

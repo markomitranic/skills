@@ -23,11 +23,13 @@
     color-scheme: light;
     --bg:#f6f8fa; --fg:#1f2328; --muted:#59636e; --card:#ffffff; --line:#d1d9e0;
     --accent:#0969da; --add:#dafbe1; --del:#ffebe9;
+    --add-ink:#1a7f37; --del-ink:#cf222e; --warn-ink:#9a6700;
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
     --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --card:#161b22; --line:#30363d;
     --accent:#58a6ff; --add:#12341f; --del:#3c1418;
+    --add-ink:#3fb950; --del-ink:#f85149; --warn-ink:#d29922;
   }
 
   /* `inline` is load-bearing. Without it the token resolves once at :root, so the
@@ -36,6 +38,7 @@
     --color-bg: var(--bg);     --color-fg: var(--fg);       --color-muted: var(--muted);
     --color-card: var(--card); --color-line: var(--line);   --color-accent: var(--accent);
     --color-add: var(--add);   --color-del: var(--del);
+    --color-add-ink: var(--add-ink); --color-del-ink: var(--del-ink); --color-warn-ink: var(--warn-ink);
     --breakpoint-wide: 60rem;
   }
 
