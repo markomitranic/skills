@@ -144,7 +144,7 @@ Illustrator rules, to keep them fast and cheap:
 - Each illustrator writes its finished figure — in whatever medium it chose — to its own file (e.g. `/tmp/prs-ch-billing.html`) and returns **only the file path plus one sentence** describing it. The markup itself never travels through a report.
 - Fragments must be self-contained: any styles scoped inside the fragment (a `<style>` block with classes prefixed by the figure's name, or inline styles), no `<html>`/`<body>` wrapper, free to use the page's colour tokens (`--fg`, `--muted`, `--accent`, `--add`/`--del` tints, `--add-ink`/`--del-ink`/`--warn-ink`).
 - **Strong contrast, non-negotiable.** `--add` and `--del` are pale *background tints* — using them as `fill`, `stroke`, or text colour produces invisible marks (`fill: var(--del)` is #ffebe9 on a white card). Anything that carries meaning — text, lines, arrows, icons — is drawn in ink: `--fg`, `--accent`, `--add-ink`, `--del-ink`, `--warn-ink`, all readable on `--bg` and `--card` in both themes. A tint is only ever the wash *behind* ink. Two self-checks: text and strokes should contrast like body text does, and the figure should still read if printed in grayscale.
-- **At most one render-check.** The illustrator may render its figure once to look for clipping or overlap, fix what it sees, and stop. No render-fix-render loops.
+- **No browser use.** The illustrator should not attempt to open the figures in a browser to preview them.
 - The main thread places a `@@FIG:name@@` placeholder where the figure goes and inlines all of them in the single swap pass from Rendering — it never opens the figure files.
 
 
