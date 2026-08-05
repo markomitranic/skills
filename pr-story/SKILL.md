@@ -110,6 +110,8 @@ Lead with the moral of the story — one plain sentence a colleague would say ou
 
 Chapters are grouped by change intent and ordered to onboard the reader top-down: the changes that anchor the PR's purpose first, utilities later. A chapter answers "what does this group of changes DO", never "what's in this directory". Optimize for reading flow, not for symmetry with the diff — chapter count follows the story, not the size of the PR.
 
+The moral is the thread every chapter hangs on. If you can't say in one breath how a chapter serves the moral, either the chapter is mis-scoped or the moral is too narrow — fix whichever is wrong before writing on.
+
 #### Writing a chapter
 
 **Titles name the concrete change** — subject, verb, object, under 50 characters. Plain beats clever: a title that shows off gets rewritten. The test: someone reading only the table of contents can tell what each chapter covers.
@@ -129,7 +131,10 @@ Then the details: paragraphs, code and the figure interwoven. The reader is tech
 
 Ground rules:
 
-- Nothing is referenced before it's introduced. The reader never meets a symbol whose definition hasn't appeared yet.
+- Nothing is leaned on before it's grounded. For symbols that's literal — the reader never meets one whose definition hasn't appeared yet. But the unit is the concept, not the word for it: a sentence with no jargon in it can still lose the reader by leaning on an idea the page hasn't introduced. Keep a running ledger of what the page has introduced so far; when the next paragraph needs a concept that isn't on it, grounding that concept IS the next paragraph.
+
+  bad:  "This also fixes the double refresh." — no term to explain, yet the page never said anything refreshed twice
+  good: "Both widgets wrote to the URL, so every click refreshed the page twice. With one writer, that's gone."
 - Why, not what. The diff already shows what changed. Prose is for intent, consequences, and relationships. Example: "Before this, a session stayed valid until the user logged out. This adds a 24h TTL so abandoned sessions can't be replayed. The TTL is measured from `createdAt` rather than `lastSeenAt`, so it fires 24h after sign-in whether or not the user is still active." Old behaviour, new behaviour, then the detail the diff can't show.
 - Who uses it? Grep the changed symbols across the repo *outside* the diff: callers, dependents, config. This blast radius is what separates the page from a file listing. If nothing outside the diff is affected, say so in one sentence and move on.
 - Noise is omitted, silently. The goal is to help understand the PR, not offer a definitive list — the reader has GitHub for that.
@@ -137,6 +142,7 @@ Ground rules:
 - Hover-tooltips explain domain terms in banal plain-language where needed.
 - Within a chapter, dependency order — schema → types → logic → call sites → UI → config — with tests beside the code they cover, never batched at the end.
 - Write prose the way you'd explain the change out loud: short sentences, plain words, the point of a paragraph in its first sentence. Name the actual value, call site or field instead of describing it in general terms.
+- Prose carries argument; lists carry parallel items — each the same kind of thing, said in the same shape. The moment an item starts arguing or explaining, it stops being an item: move it to a paragraph. And when the same shape repeats 3+ times with the same fields — old path → new path, flag → default → effect — that's a table, not a list (the template has a worked before/after table to copy).
 
 #### The story.md format
 
@@ -184,6 +190,12 @@ Spin up the line editor and every illustrator in a single message so they run co
 
 - Every rewrite says the same thing in plainer, spoken words, and is shorter or equal — never longer. It never adds content.
 - It deletes sentences that restate the diff, a figure brief, or the quick list, and reorders sentences for flow. Chapter structure is settled: it never merges, splits or reorders chapters.
+- Two cut tests on every paragraph: "what does this do for the reader that the previous one didn't?" and "if I cut it, what breaks?" Failing both means deletion — redundancy with a neighbour is the failure the word counts can't catch.
+- A sentence doing two jobs gets split, or picks one.
+
+  bad:  "Sessions now expire after 24h, measured from `createdAt` rather than `lastSeenAt` since replay of abandoned logins was the concern."
+  good: "Sessions now expire after 24h, so an abandoned login can't be replayed. The clock starts at `createdAt`, not `lastSeenAt` — staying active doesn't extend it."
+- It reads each chapter against the header blurb — the moral. A chapter the moral didn't promise gets flagged in its note, and the main thread decides: re-thread the chapter or widen the moral. The editor never rewrites the blurb itself.
 - It enforces each chapter's budget from the meta line — `wc -w` on the prose, code fences exempt. Mechanical chapters carry no number: their ceiling is two sentences totalling ≤120 characters plus at most 3 list items.
 - When a chapter carries two `@@FIG` placeholders it reads both briefs; if they describe the same mechanism, it says so in its note and the main thread decides — the editor itself never deletes a placeholder.
 - Placeholders and meta comments are load-bearing: it may move a `@@FIG:name@@` (with its brief) within its chapter, it never deletes or renames one.
