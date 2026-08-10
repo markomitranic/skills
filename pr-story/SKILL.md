@@ -105,7 +105,7 @@ Phase 3 — RENDER
 ### Phase 1 — write story.md
 
 1. Checkout, or pull PR stats, listing and metadata, so that you can be careful about accidentally reading a huge diff wholesale.
-2. Read the PR description and the associated Jira ticket and/or Figma (if any).
+2. Read the PR description and the associated Jira ticket and/or Figma (if any). If the image test (Figures section) passes — the story will have to describe what something looks like — export the Figma frame or pull the ticket's screenshot while you're there.
 3. Silently drop lockfiles, vendored deps, `dist/`, generated code, snapshots, formatting and license sweeps — they don't deserve a mention on the page.
 4. Decide on how to tell the story: write a table of contents, with a title, slug, classification and budget per chapter (the chapter meta line below).
 5. Write the chapters into `story.md` in a scratch location. Use sub-agents (Sonnet) for grunt-work: reading the surrounding module, grepping callers, chasing blast radius.
@@ -176,17 +176,34 @@ A figure must show something the reader would otherwise have to reconstruct in t
 
 A business-logic chapter carries one of each — whimsy beside the non-technical opening, technical down in the details. A mechanical chapter gets one tiny technical figure. The hero is usually whimsy: the PR's intent as an image. Write every brief while the chapter is fresh in your head; the page-writer owns the how.
 
-**Static-first, with a pulse allowed.** A figure may carry simple CSS animations — a looping transition, a gentle pulse, an element sliding home — when the motion shows the mechanism or gives the whimsy life; guard it behind `prefers-reduced-motion`. In rare if business logic complexity requires it, a toggle or button, but no more than that.
+**Static-first, with a pulse allowed.** A figure may carry simple CSS animations — a looping transition, a gentle pulse, an element sliding home — when the motion shows the mechanism or gives the whimsy life; guard it behind `prefers-reduced-motion`.
+
+Before/after belongs in one still picture: cross out the old value and write the new one beside it, or draw two small labelled cards. That almost always works — every PR is a before/after, so wanting to show two states is not a reason for a control. But when everything moved and one picture of both states is an unreadable mess, give the card a checkbox that flips it between before and after. That's the only control a figure ever gets, and it costs something: a reader skimming past only sees whichever state the card happens to show.
+
+bad:  a checkbox flipping one value on a payload card
+      (both values fit in the picture; the flip just hides one of them)
+good: a checkbox on the checkout grid where six blocks moved
+      (drawn on top of each other the two layouts are a mess; flipping is the only readable way)
+
+**Images (escape hatch).** Most stories carry no image — a drawn figure explains a mechanism better than pixels do. But an image can stand in for a figure: in place of a chapter's technical figure, or the hero. It replaces that figure, it never becomes a third visual. Two ways one arrives: the user hands you a screenshot or export (jpg, png, gif), or you fetch one yourself during research — a Figma frame via the Figma MCP, a screenshot off the Jira ticket. A user-supplied image is placed, not judged. A fetched one must pass a test that runs on your own prose, not on what's attached: if a chapter has to describe what something looks like, the reader needs the actual pixels and your drawing would be a guess about details. If the chapter explains logic, data or flow, the drawing says it better — leave the attachment where it is.
+
+bad:  the ticket has three screenshots, so the hero becomes one of them
+      (attached ≠ relevant; most tickets carry images that explain nothing)
+good: the PR fixes "logo overlaps the nav on mobile" — the before-screenshot IS the
+      problem statement; any drawing of it would be less honest
+
+Place it with the `INSERT-IMAGE` construct below; the figcaption still ties it to the mechanism. If the user wants a shareable Artifact link, images count toward the 16MB page ceiling — downscale anything over ~2MB.
 
 #### The story.md format
 
-Plain markdown, plus exactly five constructs the page-writer understands:
+Plain markdown, plus exactly six constructs the page-writer understands:
 
 1. **Doc meta** — an HTML comment right under the `#` title: `<!-- meta: repo · #PR (with URL when one exists) · branch · 1 file (+111 −38) -->`. The page-writer builds the header's metadata line from it and computes the chapter count itself. The plain paragraph right below it is the header blurb — the moral of the story.
 2. **Chapter meta** — an HTML comment right under each `##` heading: `<!-- chapter: slug=ch-single-writer type=business budget=400 -->`. Types: `intro`, `business`, `mechanical`, `test`. `budget` is the prose ceiling in words; mechanical chapters omit it — their ceiling is structural (two sentences ≤120 characters, list ≤3 items). Slugs come from the chapter's purpose, never its number, so a deep link a reader shares survives a regeneration.
 3. **Fences** — ````diff path=src/foo/bar.ts line=42` with real `+`/`-`/space prefixes on each line; `line` anchors to the head revision so it matches what the reader opens. Any other fence (````bash caption="run the tests"`) is a command card, its caption the card's title.
 4. **Tooltips** — `[term]{tip: plain-words explanation}` for domain terms.
 5. **Figure placeholders** — `<!-- INSERT-FIGURE-TECH: the mechanism and the values that matter -->` or `<!-- INSERT-FIGURE-WHIMSY: the everyday image -->` alone on its own line where the figure goes.
+6. **Image placeholders** — `<!-- INSERT-IMAGE: path=/abs/path/shot.png caption="checkout before the fix" -->` alone on its own line, for a user-supplied jpg/png/gif. The path must be absolute and the file must exist when you write the line.
 
 Example skeleton:
 
@@ -242,10 +259,11 @@ You edit `story.md` yourself, in a separate pass — never in the same breath as
 1. **Load the `artifact-design` skill first** (via the Skill tool) for its craft fundamentals — cascade hygiene, spacing via `gap`, focus states. The shell below is the existing design system, and per that skill's own precedence rule it always wins: apply it verbatim, invent nothing it already decides. Light theme only — no dark-mode plumbing.
 2. Convert story.md into one self-contained HTML file: no CDN, no external requests, no sibling assets, every style and script inline. Page shape is the shell's skeleton, top to bottom: masthead (title, metadata line from the doc meta, blurb), linked table of contents, the intro chapter with its hero, then the chapters — each `##` a section whose `id` is the meta slug. Every chapter h2 carries its number (`.ch-num`, zero-padded, matching the table of contents) and a `.ch-tag` from the meta type — "business logic" or "mechanical change"; the intro and test chapter get neither. Every meta and placeholder comment is dropped from the output.
 3. Diff fences become the shell's code cards with `path:line` in the card header, keeping the real `+`/`-`/space prefixes, added/removed lines tinted. Each code line is one `<span class="ln …">…</span>`; a blank line is an empty span (the shell gives it height, and newlines between spans are inert). Non-diff fences become command cards, the `caption=` as the card title. All code content HTML-escaped (`&` `<` `>`) — systematically, not per-line by eye; this is the most common rendering bug. `[term]{tip: …}` becomes `<span class="tip" title="…">term</span>`.
-4. Draw each placeholder in place from its brief, in HTML/CSS or inline SVG inside a `.fig-frame`. `INSERT-FIGURE-TECH` is a schematic: every label names an actual click, call or value — if it could caption a children's book, it drew a metaphor instead of the mechanism. `INSERT-FIGURE-WHIMSY` draws its brief's image as itself — simple, warm, playful labels welcome — with a one-line figcaption tying it to the mechanism. Either kind may carry simple CSS animations (a loop, a pulse, an element sliding home) guarded behind `prefers-reduced-motion`; where the mechanism truly needs it, a single CSS-only toggle (a checkbox flipping before/after), but never JS. Strong contrast: anything that carries meaning — text, lines, arrows — must read like body text, and the figure must survive grayscale. Pale tints are backgrounds only, never ink.
-5. Never author prose: every word on the page comes from story.md.
-6. Write the page top-to-bottom in at most two Write calls — no revision loop, no previewing, no rendering.
-7. Return the output path plus three counts: chapters, figures, prose words — never the document.
+4. Draw each placeholder in place from its brief, in HTML/CSS or inline SVG inside a `.fig-frame`. `INSERT-FIGURE-TECH` is a schematic: every label names an actual click, call or value — if it could caption a children's book, it drew a metaphor instead of the mechanism. `INSERT-FIGURE-WHIMSY` draws its brief's image as itself — simple, warm, playful labels welcome — with a one-line figcaption tying it to the mechanism. Either kind may carry simple CSS animations (a loop, a pulse, an element sliding home) guarded behind `prefers-reduced-motion`. Before/after goes in one still drawing — old crossed out beside new, or two small labelled cards; only if that drawing would be an unreadable mess, a checkbox that flips the card between the two states — CSS only, never JS. Strong contrast: anything that carries meaning — text, lines, arrows — must read like body text, and the figure must survive grayscale. Pale tints are backgrounds only, never ink.
+5. `INSERT-IMAGE` placeholders become `<figure><div class="fig-frame"><img src="@@IMG:/abs/path.png@@" alt="…" style="max-width:100%;display:block"></div><figcaption>…</figcaption></figure>`. The base64 must never pass through model context: after writing the HTML, run one script (bash/python) that finds every `@@IMG:…@@` token, base64-encodes that file, and splices a `data:image/{type};base64,…` URI into the page on disk — file to file. Verify with `grep -c '@@IMG:' page.html` printing 0.
+6. Never author prose: every word on the page comes from story.md.
+7. Write the page top-to-bottom in at most two Write calls — no revision loop, no previewing, no rendering. The image-splicing script runs after them and doesn't count.
+8. Return the output path plus three counts: chapters, figures, prose words — never the document.
 
 #### The page shell
 
@@ -339,7 +357,7 @@ Body skeleton:
 </div></body>
 ```
 
-**Verify without reading.** The finished page is large, and every re-read of it inflates every subsequent request for the rest of the session — never read the assembled page back. Instead: `grep -c 'INSERT-' page.html` must print 0 (no placeholder survived), the page-writer's prose word count should be within a few percent of your cutting pass's summed after-counts, and `open` the page in the system default browser for the visual once-over.
+**Verify without reading.** The finished page is large, and every re-read of it inflates every subsequent request for the rest of the session — never read the assembled page back. Instead: `grep -c 'INSERT-' page.html` must print 0 (no placeholder survived), `grep -c '@@IMG:' page.html` must print 0 when the story used images (every one got spliced), the page-writer's prose word count should be within a few percent of your cutting pass's summed after-counts, and `open` the page in the system default browser for the visual once-over.
 
 The deliverable is the local file. If the user asks for a shareable link, publish the same file with the Artifact tool instead.
 
