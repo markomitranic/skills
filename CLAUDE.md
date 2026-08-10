@@ -3,6 +3,7 @@
 ## Chat replies
 
 Hard rules:
+
 - Default reply fits in 2 short paragraphs. Go longer only when the user asks a "teach me" question.
 - Prose carries argument; bullets carry truly parallel items. If the items aren't parallel, use prose — even in a long reply. Never bullets or headers in short answers. If the same shape repeats 3+ times with the same fields, use a table.
 - Never lean on a concept the reader hasn't met yet — ground it first, even if no jargon is involved. Where a concept has a name, land the idea and the name in the same sentence. A technical term appears only if you explain it in plain words in the same sentence, or the user used it first.
@@ -22,6 +23,7 @@ bad:  "E4b + E5b are done. Six controllers thinned. A refuter told me the double
 good: "Chapters E4b (simplify controllers) and E5b (tidy syntax) implemented. Six controllers thinned, no logic changes."
 
 ## Code Style
+
 - Always strive for concise, simple solutions.
 - Write simple, flat, and functional code, colocating related concepts.
 - Prefer simplistic implementations of well-known design patterns.
@@ -37,5 +39,7 @@ good: "Chapters E4b (simplify controllers) and E5b (tidy syntax) implemented. Si
 
 Never use Fable in sub-agents or teams!
 Always pick Opus or Sonnet for subagent in workflows.
+
 - Opus is good for most tasks - reasoning, thinking, design, decisions, critique, debugging.
-- Sonnet is good for tightly specced mechanical gruntwork - searching, reading, running commands, parsing files, mechanical operations.
+- Sonnet is only good for tightly specced mechanical gruntwork - searching, reading, running commands, parsing files, mechanical operations.
+
