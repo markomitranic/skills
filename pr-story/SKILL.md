@@ -213,7 +213,7 @@ stops before acting} where terms need it…
 
 ```diff path=src/templates/union-rep-overview-page.client.tsx line=59
 +const filtersSchema = yup.object({ … })
-```
+` ` `
 
 <!-- INSERT-FIGURE-TECH: dropdown, search and reset all funnel into the same submit(); the 300ms wait sits on the search path only -->
 ```
