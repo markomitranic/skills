@@ -241,7 +241,7 @@ You edit `story.md` yourself, in a separate pass — never in the same breath as
 
 1. **Load the `artifact-design` skill first** (via the Skill tool) for its craft fundamentals — cascade hygiene, spacing via `gap`, focus states. The shell below is the existing design system, and per that skill's own precedence rule it always wins: apply it verbatim, invent nothing it already decides. Light theme only — no dark-mode plumbing.
 2. Convert story.md into one self-contained HTML file: no CDN, no external requests, no sibling assets, every style and script inline. Page shape is the shell's skeleton, top to bottom: masthead (title, metadata line from the doc meta, blurb), linked table of contents, the intro chapter with its hero, then the chapters — each `##` a section whose `id` is the meta slug. Every chapter h2 carries its number (`.ch-num`, zero-padded, matching the table of contents) and a `.ch-tag` from the meta type — "business logic" or "mechanical change"; the intro and test chapter get neither. Every meta and placeholder comment is dropped from the output.
-3. Diff fences become the shell's code cards with `path:line` in the card header, keeping the real `+`/`-`/space prefixes, added/removed lines tinted. Non-diff fences become command cards, the `caption=` as the card title. All code content HTML-escaped (`&` `<` `>`) — systematically, not per-line by eye; this is the most common rendering bug. `[term]{tip: …}` becomes `<span class="tip" title="…">term</span>`.
+3. Diff fences become the shell's code cards with `path:line` in the card header, keeping the real `+`/`-`/space prefixes, added/removed lines tinted. Each code line is one `<span class="ln …">…</span>`; a blank line is an empty span (the shell gives it height, and newlines between spans are inert). Non-diff fences become command cards, the `caption=` as the card title. All code content HTML-escaped (`&` `<` `>`) — systematically, not per-line by eye; this is the most common rendering bug. `[term]{tip: …}` becomes `<span class="tip" title="…">term</span>`.
 4. Draw each placeholder in place from its brief, in HTML/CSS or inline SVG inside a `.fig-frame`. `INSERT-FIGURE-TECH` is a schematic: every label names an actual click, call or value — if it could caption a children's book, it drew a metaphor instead of the mechanism. `INSERT-FIGURE-WHIMSY` draws its brief's image as itself — simple, warm, playful labels welcome — with a one-line figcaption tying it to the mechanism. Either kind may carry simple CSS animations (a loop, a pulse, an element sliding home) guarded behind `prefers-reduced-motion`; where the mechanism truly needs it, a single CSS-only toggle (a checkbox flipping before/after), but never JS. Strong contrast: anything that carries meaning — text, lines, arrows — must read like body text, and the figure must survive grayscale. Pale tints are backgrounds only, never ink.
 5. Never author prose: every word on the page comes from story.md.
 6. Write the page top-to-bottom in at most two Write calls — no revision loop, no previewing, no rendering.
@@ -302,8 +302,8 @@ h2 .ch-tag.business { color:var(--accent); border-color:var(--accent);
              background:#FAFBFB; border-bottom:1px solid var(--line);
              padding:8px 14px; white-space:nowrap; overflow-x:auto }
 .card-body { overflow-x:auto; padding:10px 0 }
-pre { margin:0; font:12.5px/1.7 var(--font-mono); tab-size:2 }
-pre .ln { display:block; padding:0 14px; white-space:pre; width:max-content; min-width:100% }
+pre { margin:0; font:12.5px/1.7 var(--font-mono); tab-size:2; white-space:normal }
+pre .ln { display:block; min-height:1.7em; padding:0 14px; white-space:pre; width:max-content; min-width:100% }
 pre .add { background:var(--add-bg); color:var(--add-ink) }
 pre .del { background:var(--del-bg); color:var(--del-ink) }
 pre .ctx { color:#3C4A47 }
