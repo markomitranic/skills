@@ -24,7 +24,7 @@ good: "There are 2 APIs but only 1 shared type. This makes the second API use it
 
 The whole page is what the author would say walking you through the PR at a whiteboard. If they wouldn't say it out loud, it doesn't go in.
 
-- Our north star is to lower cognitive load. If a sentence you write sounds too technical, scientific or legal, rewrite it in spoken words or delete it.
+- Our north star is to lower cognitive load. If a sentence you write sounds too technical, scientific, legal, or like "nobody speaks like that", rewrite it in spoken words or delete it.
 - Talk to "you", the reader: "you'll hit this again in chapter 3", not "the reader will encounter".
 - Answer the questions a junior would actually ask out loud ("wait, why is this in the worker?").
 - Shrugging is a valid explanation. "The rest is plumbing, nothing surprising" is a complete, honest sentence, and often the kindest one.
@@ -34,10 +34,15 @@ The whole page is what the author would say walking you through the PR at a whit
 bad:  "In this chapter we'll walk through how the validation logic was restructured."
 good: "The 2-character minimum isn't new, it just moved here from the zod schema."
 
-- A technical term appears only if the same sentence explains it in plain words, or an earlier part of the page already introduced it.
+- A technical term appears only if the same sentence explains it in plain words, or an earlier part of the page already introduced it. When a thing has a house name, land the idea and the name in the same sentence — after that, the name is fair game.
 
 bad:  "Search submits are debounced to reduce churn."
 good: "Search waits 300ms after the last keystroke before submitting (debounce), so that we don't send out 5 requests."
+
+bad:  "The sync now respects the commitment window, so stale offers stop leaking into the feed."
+      (three house terms in one sentence — "commitment window", "stale offers", "the feed" — and the reader has met none of them)
+good: "When a customer starts checkout we freeze their price for 10 minutes (the commitment window). The nightly sync used to overwrite those frozen prices; now it skips them."
+      (first says what the thing is in plain words, and the house name lands in the same sentence)
 
 Build a story, tell a narrative. Iteratively onboard the reader to the problem-space. Explain what things are. Give concrete examples, not abstract or imperative language, and plan a figure wherever a picture beats a paragraph.
 
@@ -144,7 +149,7 @@ bad:  "Two speeds, one submit path"   good: "Dropdown submits instantly, search 
 
 **Mechanical chapters** (renames, moves, dependency bumps, formatting): two sentences, a quick list of at most 3 items, one tiny figure. Done — no deep dive, no code blocks. Skip the list when the two sentences already say it all.
 
-**Business-logic chapters** start non-technical and get more technical as they go. After the opening, a quick and dirty list of the biggest changes as an overview of what's below — as many as are genuinely distinct, up to 6; two is fine, never invent a third:
+**Business-logic chapters** start non-technical and get more technical as they go. Whenever the chapter introduces something new, onboard in order: what the thing is → the problem → the fix. After the opening, a quick and dirty list of the biggest changes as an overview of what's below — as many as are genuinely distinct, up to 6; two is fine, never invent a third:
 
 - introduced the new `SearchOfferingContext` model
 - Session TTL added to `validate()`
@@ -158,6 +163,10 @@ Ground rules:
 
   bad:  "This also fixes the double refresh." — no term to explain, yet the page never said anything refreshed twice
   good: "Both widgets wrote to the URL, so every click refreshed the page twice. With one writer, that's gone."
+
+  bad:  "The OriginalPriceThumbnail is already applied in RetrieveOfferingContext - it's on the Decisions, so the basket doesn't need a second price lookup."
+        (every noun is a codebase-internal name the page hasn't met; the fuck does that even mean?)
+  good: "A single Ascendon call returns everything about the offer (RetrieveOfferingContext) - ROC.Decisions lists the options a user can pick, and each option already carries its discounted price, so the basket never needs a second lookup."
 - Why, not what. The diff already shows what changed. Prose is for intent, consequences, and relationships. Example: "Before this, a session stayed valid until the user logged out. This adds a 24h TTL so abandoned sessions can't be replayed. The TTL is measured from `createdAt` rather than `lastSeenAt`, so it fires 24h after sign-in whether or not the user is still active." Old behaviour, new behaviour, then the detail the diff can't show.
 - Who uses it? Grep the changed symbols across the repo *outside* the diff: callers, dependents, config. This blast radius is what separates the page from a file listing. If nothing outside the diff is affected, say so in one sentence and move on.
 - Noise is omitted, silently. The goal is to help understand the PR, not offer a definitive list — the reader has GitHub for that.
