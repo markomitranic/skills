@@ -2,7 +2,6 @@
 name: pr-story
 description: Turn a pull request, branch diff, or any substantial changeset into a structured HTML walkthrough. A story-driven onboarding document, ordered so nothing is referenced before it's introduced, each explaining why it exists and how it's used — delivered as a single HTML file. This explains a changeset; it does not review or critique it. Use to help user understand the problem space, like a Senior would to a Junior.
 ---
-
 # PR Story
 
 GitHub's UI for reading a PR is bad. It displays changes in alphabetic order, broken down into commits, so a human reviewer needs to perform huge cognitive load to read the code out-of-order, in order to understand what was done and why - before they can begin to review side effects or architecture.
@@ -42,6 +41,22 @@ good: "Typing waits 300ms after the last keystroke before submitting — a debou
 
 Build a story, tell a narrative. Iteratively onboard the reader to the problem-space. Explain what things are. Give concrete examples, not abstract or imperative language, and plan a figure wherever a picture beats a paragraph.
 
+- Antithesis is only good when its earned and points to something concrete, and uses natural sounding language:
+
+bad:  "This isn't just error handling — it's a philosophy of resilience."
+      (nobody claimed it was "just" anything; the second half is vapor)
+bad:  "The goal isn't to write less code, but to write the right code."
+      (both halves are fortune cookie; delete the sentence and nothing is lost)
+bad:  "We didn't simply move the file; we redefined the module boundary."
+      (they moved the file. the negation is there to make that sound bigger)
+
+good: "The TTL counts from createdAt, not lastSeenAt, so staying active doesn't extend it."
+      (the reader WOULD assume activity extends a session; the negation kills a live belief)
+good: "The lock is a ref rather than useState, because rerendering causes..."
+      (both halves concrete; the contrast IS the mechanism, used a normal word "rather than" as contrast)
+good: "The 300ms wait applies to typing only. However, picking a filter in the dropdown still submits instantly."
+      (the reader would naturally assume both paths wait; split the "not" sentence)
+
 ## Storytelling
 
 In the GitHub PR UI, the reader is presented with a dry, alphabetic code dump. This is bad because it does not assist the human reader in seeing the zoomed-out wider perspective. It focuses on things that matter little - code style, syntax - but doesn't help explain the intended effect the PR has. It doesn't present the information in a logical reading order. Your job is to rebuild that order and explain the change in it, to someone who does not know this codebase.
@@ -53,10 +68,12 @@ In the GitHub PR UI, the reader is presented with a dry, alphabetic code dump. T
 Every part of the page has a prose budget. Budgets count prose only — words inside code fences are exempt — and every number is a ceiling, not a quota. Do not pad to reach one.
 
 Boilerplate:
+
 - Introduction, ~200 words, 1 hero figure
 - Test chapter (optional), ~150 words, no figures
 
 Chapters:
+
 - Mechanical chapter, 2 sentences (≤120 characters total) + a quick list of ≤3 items, 1 tiny technical figure
 - Business-logic chapter, ~400 words, quick list included, 2 figures (one whimsy, one technical)
 
@@ -167,13 +184,13 @@ Plain markdown, plus exactly five constructs the page-writer understands:
 
 1. **Doc meta** — an HTML comment right under the `#` title: `<!-- meta: repo · #PR (with URL when one exists) · branch · 1 file (+111 −38) -->`. The page-writer builds the header's metadata line from it and computes the chapter count itself. The plain paragraph right below it is the header blurb — the moral of the story.
 2. **Chapter meta** — an HTML comment right under each `##` heading: `<!-- chapter: slug=ch-single-writer type=business budget=400 -->`. Types: `intro`, `business`, `mechanical`, `test`. `budget` is the prose ceiling in words; mechanical chapters omit it — their ceiling is structural (two sentences ≤120 characters, list ≤3 items). Slugs come from the chapter's purpose, never its number, so a deep link a reader shares survives a regeneration.
-3. **Fences** — ` ```diff path=src/foo/bar.ts line=42 ` with real `+`/`-`/space prefixes on each line; `line` anchors to the head revision so it matches what the reader opens. Any other fence (` ```bash caption="run the tests" `) is a command card, its caption the card's title.
+3. **Fences** — ````diff path=src/foo/bar.ts line=42` with real `+`/`-`/space prefixes on each line; `line` anchors to the head revision so it matches what the reader opens. Any other fence (````bash caption="run the tests"`) is a command card, its caption the card's title.
 4. **Tooltips** — `[term]{tip: plain-words explanation}` for domain terms.
 5. **Figure placeholders** — `<!-- INSERT-FIGURE-TECH: the mechanism and the values that matter -->` or `<!-- INSERT-FIGURE-WHIMSY: the everyday image -->` alone on its own line where the figure goes.
 
 Example skeleton:
 
-````markdown
+```markdown
 # Two filter widgets fight over one URL
 <!-- meta: dansk-metal-website #1207 · union-rep-form-state-mng · 1 file (+111 −38) -->
 
@@ -199,7 +216,7 @@ stops before acting} where terms need it…
 ```
 
 <!-- INSERT-FIGURE-TECH: dropdown, search and reset all funnel into the same submit(); the 300ms wait sits on the search path only -->
-````
+```
 
 ### Phase 2 — the cutting pass
 
@@ -207,15 +224,16 @@ You edit `story.md` yourself, in a separate pass — never in the same breath as
 
 - Every rewrite says the same thing in plainer, spoken words, and is shorter or equal — never longer. This pass never adds content.
 - Delete sentences that restate the diff, a figure brief, or the quick list; reorder sentences for flow.
-- Two cut tests on every paragraph: "what does this do for the reader that the previous one didn't?" and "if I cut it, what breaks?" Failing both means deletion — redundancy with a neighbour is the failure the word counts can't catch.
+- Two cut tests on every paragraph: "what does this do for the reader that the previous one didn't?" and "if I cut it, what breaks?" Failing both means deletion. Redundancy with a neighbour is the failure the word counts can't catch.
 - A sentence doing two jobs gets split, or picks one.
 
   bad:  "Sessions now expire after 24h, measured from `createdAt` rather than `lastSeenAt` since replay of abandoned logins was the concern."
-  good: "Sessions now expire after 24h, so an abandoned login can't be replayed. The clock starts at `createdAt`, not `lastSeenAt` — staying active doesn't extend it."
+  good: "Sessions now expire after 24h, so an abandoned login can't be replayed. The clock starts at `createdAt` rather than `lastSeenAt` so that staying active doesn't extend the session."
 - Read each chapter against the header blurb — the moral. A chapter the moral didn't promise means one of them is wrong: re-thread the chapter or widen the moral. Run the merge test from the Table of contents section too: two chapters whose moral-links are the same sentence with different nouns collapse into one, the second surviving as a quick-list item.
 - Enforce each chapter's budget from the meta line — `wc -w` on the prose, code fences exempt, before and after. Mechanical chapters carry no number: their ceiling is two sentences totalling ≤120 characters plus at most 3 list items.
-- A business chapter carries one `INSERT-FIGURE-WHIMSY` (by the opening) and one `INSERT-FIGURE-TECH` (by the details); two of the same kind means one goes.
-- Note the per-chapter after-counts — they're the cross-check for the render phase.
+- A business chapter carries one `INSERT-FIGURE-WHIMSY` (by the opening) and one `INSERT-FIGURE-TECH` (by the details).
+- Antithesis is good only when its direct and complete (fx. bad: "cart is now red, not blue")
+- Recognize AI slop speech or common signs of AI writing such as reliance on em dashes or filler sentences.
 
 ### Phase 3 — render
 
@@ -330,3 +348,4 @@ The deliverable is the local file. If the user asks for a shareable link, publis
 - You are in charge of the codebase, you are allowed to switch branches or use git commands to do comparisons, or github commands to read stats and file lists.
 - Detect moves so relocations don't read as rewrites — git's `-M`/`-C`, or compare the blocks on large delete+insert pairs. Report "moved, unchanged" or "moved, plus these edits", showing only the real edits.
 - Anchor line numbers to the **head** revision so they match what the reader opens. The hunk header's second number (`@@ -40,7 +42,9 @@` → 42) is the head start line; count forward.
+
