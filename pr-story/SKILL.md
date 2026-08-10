@@ -37,7 +37,7 @@ good: "The 2-character minimum isn't new, it just moved here from the zod schema
 - A technical term appears only if the same sentence explains it in plain words, or an earlier part of the page already introduced it.
 
 bad:  "Search submits are debounced to reduce churn."
-good: "Typing waits 300ms after the last keystroke before submitting — a debounce — so five letters cost one request instead of five."
+good: "Search waits 300ms after the last keystroke before submitting (debounce), so that we don't send out 5 requests."
 
 Build a story, tell a narrative. Iteratively onboard the reader to the problem-space. Explain what things are. Give concrete examples, not abstract or imperative language, and plan a figure wherever a picture beats a paragraph.
 
@@ -249,8 +249,7 @@ You edit `story.md` yourself, in a separate pass — never in the same breath as
 - Read each chapter against the header blurb — the moral. A chapter the moral didn't promise means one of them is wrong: re-thread the chapter or widen the moral. Run the merge test from the Table of contents section too: two chapters whose moral-links are the same sentence with different nouns collapse into one, the second surviving as a quick-list item.
 - Enforce each chapter's budget from the meta line — `wc -w` on the prose, code fences exempt, before and after. Mechanical chapters carry no number: their ceiling is two sentences totalling ≤120 characters plus at most 3 list items.
 - A business chapter carries one `INSERT-FIGURE-WHIMSY` (by the opening) and one `INSERT-FIGURE-TECH` (by the details).
-- Antithesis is good only when its direct and complete (fx. bad: "cart is now red, not blue")
-- Recognize AI slop speech or common signs of AI writing such as reliance on em dashes or filler sentences.
+- Rewrite common signs of AI writing such as slop-filling, em dashes, or bad antithesis.
 
 ### Phase 3 — render
 
