@@ -11,6 +11,8 @@ We prefer simplistic implementations of well-known design patterns, as you can o
 This usually means writing simple, flat, and functional code, namespacing and colocating related concepts.
 
 - Typesafety is useful, so take advantage of it.
+- Complexity belongs at the adapter boundary, orchestration stays pure, UI stays dumb.
+- Inferred types are better than annotations. `any` is the enemy.
 - Tests are great, but endless smoke tests, or exhaustive tests, or "regression tests" for feature deletions etc are overwhelming, much less good. Tests should be small and focused, not filler slop.
 - Avoid one-line functions that are just casting wrappers.
 - Proactively remove unused code and dependencies, we don't want to leave dead code around unless we have a good reason for it (fx. public api or future plans)
@@ -18,7 +20,7 @@ This usually means writing simple, flat, and functional code, namespacing and c
 
 ### A word on code comments
 
-- Comments are a great way to clarify functionality and how code is used, but please don't make inline-comments. If you make or see an inline-comment, the code is not clear enough. Fix the code.
+- Comments are a great way to explain how a thing is used, but please don't make inline-comments. If you make or see an inline-comment, it signals that the code is not clear enough. Fix the code instead.
 - Keep comments up to date, when making changes, its important to keep things in sync.
 - Function and module comments are the bomb. Add or update JSDoc for every exported (or non-trivial private) function, specify inputs and outputs:
   1. Single short line - explains the purpose
