@@ -16,6 +16,7 @@ Fix real findings and and obvious issues such as CI failures. When encountering 
 - Please don't attribute commits and comments to Claude.
 - Feel free to push the changes, but batch them together (for example at the end of one full pass), so that we don't re-trigger costly CI/AI review pipelines for every single tiny commit.
 - Default to skepticism on both sides. AI reviewers invent constraints, whereas humans tend to leave drive-by style preferences dressed as bugs.
+- Do not allow the review feedback to expand the PR beyond the user's original goal. Sure, address real shortcomings, but avoid scope creep.
 
 ## Workflow
 
@@ -25,6 +26,7 @@ Fix real findings and and obvious issues such as CI failures. When encountering 
 4. Thats it, now triage each problem and figure out what to do - you'll either make a fix, or rebut.
   - **Simple, low-risk win** → fix it, lint commit etc, and resolve relevant threads
   - **Hallucination** → rebut, comment and resolve relevant threads.
+5. Once you make a full pass, push any changes, and monitor for the next batch of reviews.
 
 Strip each claim to its actual core assertion and investigate before judging. That means reading the files and surrounding context and analyzing or testing the claim. Sometimes reviewers are convinced that there is a bug or constraint, which is actually not there, or misunderstand the code. Other times, the concern may be real, but already handled elsewhere in the codebase.
 
