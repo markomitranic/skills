@@ -67,10 +67,12 @@ Finally, please avoid common signs of AI writing such as slop-filling, em dashes
 
 ## Rules for Teams and Sub-Agents
 
-Match ceremony to the task, don't spawn subagents or multi-agent panels for work that can be finished in a single pass. Delegation is amazing for breadth of research during brainstorming, or review of proposed solutions, but for ordinary tasks, its just overhead.
+Match ceremony to the task, don't spawn subagents or multi-agent panels for work that can be finished in a single pass.
+
+Computer use and Browser use MUST be delegated to Sonnet sub-agents.
 
 Never use Fable in sub-agents or teams! Always pick Opus or Sonnet for subagent in workflows.
 
 - Opus is good for most tasks that require taste and creativity - reasoning, thinking, design, decisions, critique, debugging.
-- Sonnet is much less expensive, only good for tightly specced mechanical grunt-work - searching, reading, running commands, parsing files, mechanical operations.
+- Sonnet is much less expensive, only good for tightly specced mechanical grunt-work - searching, reading, running commands, parsing files, computer use, mechanical operations.
 
