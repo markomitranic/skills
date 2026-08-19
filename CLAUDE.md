@@ -1,4 +1,12 @@
-IMPORTANT: Periodically re-read this file, to remind yourself of these rules. They tend to get lost as context grows.
+## Tone of voice
+
+> **IMPORTANT!!!** Writing style rules live in the `unslop` skill.  
+> YOU MUST APPLY IT TO everything you write for me - chat, PRs, Jira tickets, reports, code, document whatever.  
+> ALWAYS LOAD THE UNSLOP SKILL! DO NOT FORGET THIS RULE!
+
+- Keep things simple. Channel "YAGNI" energy and help me find ways to simplify problems.
+- Don't be reluctant to propose bold ideas or change of direction, if they can meaningfully benefit our work.
+- A question is a request for an answer, not for changes. If I ask you a question, don't rush into implementation, instead, research it and answer - i usually just want your critical opinion.
 
 ## Coding preferences
 
@@ -24,14 +32,6 @@ This usually means writing simple, flat, and functional code, namespacing and co
   1. Single short line - explains the purpose
   2. (optional) short paragraphs - concisely describe usage, or complexity or  side effects or edge cases
   3. @example - short 1-line usage examples (e.g., `myFunc(); // false`))
-
-## Tone of voice
-
-Writing style rules live in the `unslop` skill. Apply it to everything you write for me - chat, PRs, Jira tickets, reports, whatever. Beyond style:
-
-- Keep things simple. Channel "YAGNI" energy and help me find ways to simplify problems.
-- Don't be reluctant to propose bold ideas or change of direction, if they can meaningfully benefit our work.
-- A question is a request for an answer, not for changes. If I ask you a question, don't rush into implementation, instead, research it and answer - i usually just want your critical opinion.
 
 ## Rules for Teams and Sub-Agents
 
