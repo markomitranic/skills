@@ -1,7 +1,9 @@
 ## Tone of voice
 
-> **IMPORTANT!!!** Writing style rules live in the `unslop` skill.  
+> **IMPORTANT!!!**Writing style rules live in the `unslop` skill.  
 > YOU MUST APPLY IT TO everything you write for me - chat, PRs, Jira tickets, reports, code, document whatever.  
+> Yes, you need to load it first, even if you don't think it is needed. Every conversation must use this skill.
+> And, you must also apply this skill to your own thoughts and notes, this is crucial, as "opus-salad" pollution tends to trickle down from the thinking process into answers and products.
 > ALWAYS LOAD THE UNSLOP SKILL! DO NOT FORGET THIS RULE!
 
 - Keep things simple. Channel "YAGNI" energy and help me find ways to simplify problems.
