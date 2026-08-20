@@ -22,34 +22,32 @@ This MUST NOT sound like a dry legal/technical document. It should explain conce
 - Answer the questions a junior would actually ask out loud ("wait, why is this in the worker?").
 - Always place an INSERT-FIGURE in the introduction chapter. A slide-sized, boundaried, contained card that visualizes the single most important concept of the PR's intent.
 - Don't restate or announce things you'll say, just jump into the meat of it.
-
-      bad:  "In this chapter we'll walk through how the validation logic was restructured."
-      good: "The 2-character minimum was moved from the zod schema without any actual changes to the rule."
+  ```
+  bad:  "In this chapter we'll walk through how the validation logic was restructured."
+  good: "The 2-character minimum was moved from the zod schema without any actual changes to the rule."
+  ```
 
 **No Critique:** Your job is NOT to review the code, it is purely to help the reader understand it. Explain a behaviour so the human can judge it themselves, then stop — no verdicts, no critique, no severity flags. Judging the code is the human's task, your job is to provide the context, details, explanations, edge cases, examples etc.
 
 ## Page Structure
 
-1. Introduction, ~200 words, 1 hero figure
-2. Explainer Chapters
-3. How to test, ~150 words, no figures
+1. Introduction, ~100 words, 1 hero figure
+2. Explainer Chapters, ~150 words, 2 figures (the opening figure aimed at non-technical readers, like a PM)
+3. Architecture Chapter, ~80 words, a large figure
 
-The explainer chapters are classified differently depending on what they are explaining:
-- Mechanical chapter, 2 sentences (≤120 characters total) + a quick list of ≤3 items, 1 tiny figure
-- Business-logic chapter, ~400 words, quick list included, 2 figures — the opening figure aimed at non-technical readers, like a PM
-
-Don't do more than 4 explainer chapters, most PRs don't deserve that much breakdown, and nobody will read that much text. Aim at 2 or 3 chapters and let the storytelling decide the count. This means you'll need to think about how to onboard the user gently, the problem space matters more than the amount of code or call-sites a chapter covers. Optimize for reading flow, not for symmetry with the diff.
+Don't do more than 3 explainer chapters, most PRs don't deserve that much breakdown, and nobody will read that much text. Aim at 2 chapters and let the storytelling decide the count. This means you'll need to think about how to onboard the user gently, the problem space matters more than the amount of code or call-sites a chapter covers. Optimize for reading flow, not for symmetry with the diff.
 
 We classify a chapter as business-logic if observable behaviour changes. For example a user, a caller, or an API sees something different afterwards. This is because it simply takes more effort to explain those concepts, whereas explaining "adding auth to 240 apis" is very mechanical and doesn't really deserve to waste our attention spans.
 
+Architecture chapter is a short paragraph that focuses on how the changes sit in our layered architecture. The figure should illustrate the breakdown and display what files/responsibilities/changes sit on which layer and which seam. This will help illustrate how the data flows through the application.
+
 Pro tips:
+
 - Act like a good technical writer would, and teach it gradually, like a story.
 - The prose beside a code chunk or a figure must point at something specific inside it.
-- Channel the way skillshare, blogposts or good science communicators add illustrations to their explainers.
-- The how to test chapter is optional, it could have commands to run, UI actions that replicate the issue or whatever else comes to mind.
+- Get inspired by the way skillshare, blogposts or good science communicators add illustrations to their explainers.
 
 ## Pipeline
-
 
 ### Step 1: Research
 
@@ -65,7 +63,10 @@ Reminder: your job is not to review, its only to compile knowledge about what th
 
 Time to write all the prose as a markdown file in the temporary folder or scratch location. That will be our baseline for the rest of the process. You'll need to decide how to tell the story, what chapters are needed, and all the prose for them, according to our rules above. Put your technical writer hat on, and optimize for lowering the cognitive load for the reader.
 
+When done, do a quick, rough check of the chapter lengths, and resize them as needed.
+
 **Pro tips:**
+
 - Document title should state what problem we are solving (fx. "Double-clicking Next could skip a checkout step")
 - Start with an abstract. That is when the human's attention is at its sharpest, but their knowledge of the intent at the lowest. It should contain the moral of the story, what was fixed, why, and how, from a non-technical perspective, with a believable example.
 - After the abstract you can go a bit deeper, in 2 paragraphs, explain the zoomed out approach and list figma, jira, storybook, docs and other relevant links.
@@ -77,13 +78,15 @@ Time to write all the prose as a markdown file in the temporary folder or scratc
 - Hover-tooltips explain business terms or domain terms in banal plain-language, using `[term]{tip: plain-words explanation}`.
 - Don't forget to insert the correct amount of `INSERT-FIGURE` placeholders according to the rules, using `<!-- INSERT-FIGURE: alt text, what are we trying to portray -->`.
 - Rewrite common signs of AI writing such as slop-filling, em dashes, or bad antithesis.
-- When writing code blocks, add fences ````diff path=src/foo/bar.ts line=42` with real `+`/`-`/space prefixes on each line.
+- When writing code blocks, add fences ````diff path=src/foo/bar.ts line=42`with real`+`/`-`/space prefixes on each line.
 
 ### Step 3: Artifact Design
 
 Finally, we are ready to produce the actual HTML and all the figures in it. This must be a separate pass from the prose writing. You must load the artifact-design skill (via the Skill tool), and convert the markdown into HTML, while drawing illustrative figures in the labeled spaces.
 
 You take the markdown file, and then digest that into a visual HTML onboarding guide using the artifact-design skill. Print out the output path to the user, and open the file in the system default browser so that the user can easily access it.
+
+There is no need to run QA passes or validation sub agents on the document. It is an internal report.
 
 **Figure Design**
 
@@ -106,7 +109,7 @@ The deliverable is the local file. If the user asks for a shareable link, publis
 This is the page's design system — tokens, type and components are settled; the page-writer types content into them. Anything the shell doesn't cover (figure internals, a one-off layout) is styled in its spirit: same tokens, same restraint.
 
 ```html
-<style>
+[[ORCA_RICH_MD:faae59194dc83f78b5bb72b34829e22a:block-html:%3Cstyle%3E]]
 :root {
   --ground:#F1F4F3; --surface:#FFFFFF; --ink:#14201E; --muted:#5D6B68;
   --line:#D4DCD9; --line-strong:#A9B7B3;
@@ -192,3 +195,4 @@ Body skeleton:
   </section>
 </div></body>
 ```
+
