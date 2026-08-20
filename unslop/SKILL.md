@@ -36,7 +36,7 @@ Structure for anything that teaches or reports.
 
 ### Content
 
-1. **Puffery.** "pivotal moment", "testament to", "evolving landscape", "setting the stage for", "indelible mark", "deeply rooted". Cut puffery, state what happened.
+1. **Puffery.** "pivotal moment", "testament to", "evolving landscape", "load-bearing", "setting the stage for", "indelible mark", "deeply rooted". Cut puffery, state what happened.
 2. **Name-dropping.** Listing media outlets without context. Pick one, say what was said.
 3. **Superficial -ing phrases.** "highlighting...", "ensuring...", "reflecting...", "showcasing...", "fostering...". Delete or expand with real sources.
 4. **Promotional language.** "nestled", "vibrant", "breathtaking", "groundbreaking", "renowned", "stunning", "must-visit". Use neutral descriptions.
@@ -55,13 +55,14 @@ Structure for anything that teaches or reports.
 
 ### Style
 
-14. **Em dash overuse.** Avoid em dashes entirely. Use periods or commas only (no parentheses, no en dashes, no hyphen-as-dash substitutes). Em dashes are an AI tell, and reaching for parentheses instead just trades one tell for another. If a thought needs separation, end the sentence or use a comma.
+14. **Em dashes.** Never use em dashes. Use periods or commas only (no parentheses, no en dashes, no hyphen-as-dash substitutes). Em dashes are an AI tell, and reaching for parentheses instead just trades one tell for another. If a thought needs separation, end the sentence or use a comma.
 15. **Colon overuse.** Colons are fine before a list or example. Not as mid-sentence connectors. "If you're coming from traditional automation: instead of registering event handlers, you describe conditions" adds nothing with the colon. Rewrite to let the point stand on its own without comparison framing. "Describing when the scheduler should fire works best as plain English." Same meaning, no crutch punctuation.
 16. **Boldface overuse.** Don't bold every proper noun or acronym.
 17. **Inline-header lists.** The tell is a bold label and colon that restates the line: "**Performance:** Performance improved...". Convert those to prose. A bold lead-in that ends in a period, names the item, and is followed by genuinely new detail ("**Schema in TypeScript.** Tables live in one file.") is fine, not a tell.
 18. **Title case headings.** Use sentence case.
 19. **Decorative emojis.** Remove from headings and bullets.
 20. **Curly quotes.** Replace with straight quotes.
+21. **Telling me how many things had to be true. "**Two things had to be true before any of this worked, and both are easy to get wrong." Nobody cares, the sentence adds zero value, just say what you meant.
 
 ### Communication artifacts
 
