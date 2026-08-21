@@ -51,7 +51,8 @@ Structure for anything that teaches or reports.
 10. **Rule of three.** Forcing ideas into groups of three. Use the natural number.
 11. **Synonym cycling.** Protagonist, main character, central figure, hero all in one paragraph. Pick one, repeat it.
 12. **False ranges.** "from X to Y" where X and Y aren't on a meaningful scale. List topics directly.
-13. **Absolutes.** "complete", "exhaustive", "definitive", "always", "never". "The ladder is the complete list of roles" overclaims; nothing in this life is certain. Drop the absolute or state the actual bound.
+13. **Reassuring yourself.** "The one edit we make to the copy.", "...and this is the load-bearing one", "One thing you should know". Yeah, i have eyes, just skip to what it is, no need to preface it.
+14. **Absolutes.** "complete", "exhaustive", "definitive", "always", "never". "The ladder is the complete list of roles" overclaims; nothing in this life is certain. Drop the absolute or state the actual bound.
 
 ### Style
 
