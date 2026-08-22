@@ -3,8 +3,8 @@
 repo_root=$(git rev-parse --show-toplevel)
 
 cp -f "$repo_root/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+echo "💿 Global CLAUDE.md synced with this version."
 
 mkdir -p "$HOME/.claude/output-styles"
 cp -f "$repo_root"/output-styles/*.md "$HOME/.claude/output-styles/"
-
-echo "💿 Global CLAUDE.md synced with this version."
+echo "💿 Global /output-styles/ synced with this version."
