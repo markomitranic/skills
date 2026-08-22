@@ -6,15 +6,29 @@ Alongside the skills, `output-styles/` holds custom output styles. An output sty
 
 ## Output styles
 
-- **`output-styles/unslop.md`.** Writing style rules, applied to every response. Turn it on with `/config` → Output style → `unslop`, or set it in `~/.claude/settings.json`:
-  ```json
-  "outputStyle": "unslop"
-  ```
-  It takes effect on `/clear` or the next session, since Claude Code reads the system prompt once at startup. Note that output styles apply to the main conversation only, not to subagents.
+`**output-styles/unslop.md`.** Writing style rules, applied to every response. Turn it on with `/config` → Output style → `unslop`, or set it in `~/.claude/settings.json`:
+
+```json
+"outputStyle": "unslop"
+```
+
+It takes effect on `/clear` or the next session, since Claude Code reads the system prompt once at startup. Note that output styles apply to the main conversation only, not to subagents.
+
+> **💡 Pro tip: hard-enforce it with a hook.** Claude drifts back to its default voice on long conversations. Anthropic solves this by having a `turnReminder` hook that  re-injects their rules on every turn.
+>
+> Custom style have no such luxury, but we can just register our own hook! Run `/hooks` to confirm it registered.
+>
+> ```json title="~/.claude/settings.json"
+> "hooks": {
+>   "UserPromptSubmit": [
+>     { "hooks": [{ "type": "command", "command": "~/.claude/skills/hooks/unslop-reminder.sh" }] }
+>   ]
+> }
+> ```
 
 ## Other tooling
 
-- **`status-line/`** — Bash script that renders the Claude Code status line (branch, model, context window usage with rot warnings, session cost). Wire it up in `~/.claude/settings.json`:
+- `**status-line/**` — Bash script that renders the Claude Code status line (branch, model, context window usage with rot warnings, session cost). Wire it up in `~/.claude/settings.json`:
   ```json
   "statusLine": {
     "type": "command",
