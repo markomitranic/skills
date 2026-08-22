@@ -18,7 +18,9 @@ It takes effect on `/clear` or the next session, since Claude Code reads the sys
 >
 > Custom style have no such luxury, but we can just register our own hook! Run `/hooks` to confirm it registered.
 >
-> ```json title="~/.claude/settings.json"
+> ```json
+> // ~/.claude/settings.json
+>
 > "hooks": {
 >   "UserPromptSubmit": [
 >     { "hooks": [{ "type": "command", "command": "~/.claude/skills/hooks/unslop-reminder.sh" }] }
@@ -42,10 +44,10 @@ This repo lives at `~/.claude/skills/`, which is where Claude Code looks for use
 
 ```
 skills/
-├── <skill-name>/
+├── [[ORCA_RICH_MD:151c3b64cd8ca0b60383e855cd1dbc12:inline-html:%3Cskill-name%3E]]/
 │   └── SKILL.md
 └── output-styles/
-    └── <style-name>.md
+    └── [[ORCA_RICH_MD:151c3b64cd8ca0b60383e855cd1dbc12:inline-html:%3Cstyle-name%3E]].md
 ```
 
 Claude Code reads output styles from `~/.claude/output-styles/`, not from this folder, so the git hooks in `.githooks/` copy `output-styles/*.md` out on every commit, checkout, merge and push. Same trick they already use for `CLAUDE.md`.
