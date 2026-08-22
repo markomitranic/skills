@@ -6,3 +6,5 @@ cp -f "$repo_root/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 
 mkdir -p "$HOME/.claude/output-styles"
 cp -f "$repo_root"/output-styles/*.md "$HOME/.claude/output-styles/"
+
+echo "💿 Global CLAUDE.md synced with this version."
