@@ -38,7 +38,7 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 
 Structure for anything that teaches or reports.
 
-- **Onboard in order: the thing, the problem, the fix.** Say what the thing is before why it matters, and why it matters before what changed. The reader stays patient because each step lands on solid ground.
+- **Onboard in order:** the thing, the problem, the fix.
 - **Ground new terms.** Never lean on a domain concept the reader hasn't met. Land the idea and its name in the same sentence: "When a customer starts checkout we freeze their price for 10 minutes (the commitment window)." After that, the term is fair game. Bad: "The sync now respects the commitment window, so stale offers stop leaking into the feed" (three house terms, reader has met none).
 - **Anchor with short concrete examples.** One real input and output beats a paragraph of description. An ASCII drawing helps when describing structure or flow; a picture says a thousand words.
 
