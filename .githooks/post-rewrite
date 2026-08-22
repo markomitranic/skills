@@ -1,2 +1,2 @@
 #!/bin/sh
-"$(git rev-parse --show-toplevel)/.githooks/sync-claude-md.sh"
+"$(git rev-parse --show-toplevel)/.githooks/sync-global.sh"
