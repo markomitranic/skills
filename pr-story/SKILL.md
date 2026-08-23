@@ -202,13 +202,16 @@ Body skeleton:
     …figure…
   </section>
 </div>
-<script>@@READING-NOTES@@</script>
+<script>
+@@READING-NOTES@@
+</script>
 </body>
 ```
 
-The `@@READING-NOTES@@` needle is the reading-notes widget (reader selects text, queues questions, copies them as one AI prompt). After writing the HTML, replace it with the contents of `reading-notes.js` (it lives next to this SKILL file) — file to file, the JS never passes through model context:
+The `@@READING-NOTES@@` needle is a special JavaScript injection you must perform after writing the HTML.
 
+Replace it with `$HOME/.claude/skills/pr-story/reading-notes.js`. Use the cli script below, so the large file content never pollutes your context. Do not open the file, just ensure that `sed` points to your HTML file, and `sed` will inject it:
 ```bash
-python3 -c 'import sys; p, j = sys.argv[1:]; h = open(p).read(); open(p, "w").write(h.replace("@@READING-NOTES@@", open(j).read()))'
+sed -i -e "/@@READING-NOTES@@/r $HOME/.claude/skills/pr-story/reading-notes.js" -e "/@@READING-NOTES@@/d" pr-artifacts/pr-story.html
 ```
 
