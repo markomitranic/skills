@@ -209,6 +209,6 @@ Body skeleton:
 The `@@READING-NOTES@@` needle is the reading-notes widget (reader selects text, queues questions, copies them as one AI prompt). After writing the HTML, replace it with the contents of `reading-notes.js` (it lives next to this file) — file to file, the JS never passes through model context:
 
 ```bash
-python3 -c 'import sys; p, j = sys.argv[1:]; h = open(p).read(); open(p, "w").write(h.replace("@@READING-NOTES@@", open(j).read()))' [[ORCA_RICH_MD:c5ddf95d72ffdd9719cc6460af69d515:inline-html:%3Cpage.html%3E]] [[ORCA_RICH_MD:c5ddf95d72ffdd9719cc6460af69d515:inline-html:%3Cskill-dir%3E]]/reading-notes.js
+python3 -c 'import sys; p, j = sys.argv[1:]; h = open(p).read(); open(p, "w").write(h.replace("@@READING-NOTES@@", open(j).read()))'
 ```
 
