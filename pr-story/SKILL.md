@@ -37,7 +37,7 @@ This MUST NOT sound like a dry legal/technical document. It should explain conce
 
 Don't do more than 3 explainer chapters, most PRs don't deserve that much breakdown, and nobody will read that much text. Aim at 2 chapters and let the storytelling decide the count. This means you'll need to think about how to onboard the user gently, the problem space matters more than the amount of code or call-sites a chapter covers. Optimize for reading flow, not for symmetry with the diff.
 
-We classify a chapter as business-logic if observable behaviour changes. For example a user, a caller, or an API sees something different afterwards. This is because it simply takes more effort to explain those concepts, whereas explaining "adding auth to 240 apis" is very mechanical and doesn't really deserve to waste our attention spans.
+We classify a chapter as business-logic if observable behavior changes. For example a user, a caller, UI, or an API sees something different afterwards. It takes more effort to explain those concepts, and these changes deserve our full attention. These chapters additionally deserve some before/after examples of the actual output or behavior, rather than code diff. Examples: a API response field changes, sample database row grid, prompts or payloads, URL changes etc.
 
 Architecture chapter is a short paragraph that focuses on how the changes sit in our layered architecture. The figure should illustrate the breakdown and display what files/responsibilities/changes sit on which layer and which seam. This will help illustrate how the data flows through the application.
 
@@ -91,6 +91,14 @@ There is no need to run QA passes or validation sub agents on the document. It i
 **Figure Design**
 
 We must rely on static figures to lower cognitive load, as humans are visual learners. Lowering cognitive load with visual aids is our north star metric. We do not want the figures to be overly detailed and boring however, be creative in the form of the drawing, but do not use outlandish methaphors, instead try to illustrate what the prose is explaining and what is changing, as a visual companion to the prose, like good educators do.
+
+- Chapter paragraphs, code and the figures should be interwoven.
+- A figure accompanies a specific piece of prose and shows the thing the prose  
+is explaining. It myst always point at the concept from neighbouring paragraphs.
+- One idea per figure. A figure that needs a legend is usually two figures.
+- Draw the actual mechanism, not a metaphor. Boxes are real components, arrows  
+are real calls or data.
+- Aim for &gt;20 words of text inside a figure. Detail belongs in the prose, figures are for illustration purposes.
 
 **Images (escape hatch).** 
 
@@ -193,6 +201,14 @@ Body skeleton:
       <div class="card-body"><pre><span class="ln add">+ …</span></pre></div></div>
     …figure…
   </section>
-</div></body>
+</div>
+<script>@@READING-NOTES@@</script>
+</body>
+```
+
+The `@@READING-NOTES@@` needle is the reading-notes widget (reader selects text, queues questions, copies them as one AI prompt). After writing the HTML, replace it with the contents of `reading-notes.js` (it lives next to this file) — file to file, the JS never passes through model context:
+
+```bash
+python3 -c 'import sys; p, j = sys.argv[1:]; h = open(p).read(); open(p, "w").write(h.replace("@@READING-NOTES@@", open(j).read()))' [[ORCA_RICH_MD:c5ddf95d72ffdd9719cc6460af69d515:inline-html:%3Cpage.html%3E]] [[ORCA_RICH_MD:c5ddf95d72ffdd9719cc6460af69d515:inline-html:%3Cskill-dir%3E]]/reading-notes.js
 ```
 
