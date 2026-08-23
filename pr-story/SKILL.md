@@ -206,7 +206,7 @@ Body skeleton:
 </body>
 ```
 
-The `@@READING-NOTES@@` needle is the reading-notes widget (reader selects text, queues questions, copies them as one AI prompt). After writing the HTML, replace it with the contents of `reading-notes.js` (it lives next to this file) — file to file, the JS never passes through model context:
+The `@@READING-NOTES@@` needle is the reading-notes widget (reader selects text, queues questions, copies them as one AI prompt). After writing the HTML, replace it with the contents of `reading-notes.js` (it lives next to this SKILL file) — file to file, the JS never passes through model context:
 
 ```bash
 python3 -c 'import sys; p, j = sys.argv[1:]; h = open(p).read(); open(p, "w").write(h.replace("@@READING-NOTES@@", open(j).read()))'
