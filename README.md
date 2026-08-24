@@ -60,3 +60,35 @@ skills/
 Claude Code reads output styles from `~/.claude/output-styles/`, not from this folder, so the git hooks in `.githooks/` copy `output-styles/*.md` out on every commit, checkout, merge and push. Same trick they already use for `CLAUDE.md`.
 
 The `SKILL.md` frontmatter `description` is what Claude matches against to decide whether to invoke the skill — keep it specific and trigger-rich.
+
+## Usage in other tools
+
+Claude Code stays the source of truth. Other agents can read these files in place.
+
+### opencode
+
+Skills and `CLAUDE.md` work with no setup. opencode's global search paths already include `~/.claude/skills/<name>/SKILL.md` and it falls back to `~/.claude/CLAUDE.md` for global instructions.
+
+Only the output style needs wiring, since opencode has no equivalent concept:
+
+```diff
+  // ~/.config/opencode/opencode.json
+  {
+    "$schema": "https://opencode.ai/config.json",
++   "instructions": ["~/.claude/skills/output-styles/unslop.md"]
+  }
+```
+
+> **⚠️ Careful with `AGENTS.md`.** opencode picks the first match per category rather than merging, and `~/.config/opencode/AGENTS.md` beats `~/.claude/CLAUDE.md`. A global `AGENTS.md` silently shadows your `CLAUDE.md`. Leave it absent.
+
+### Codex
+
+Codex reads neither `~/.claude/skills` nor `CLAUDE.md`. Its skill roots are `~/.agents/skills` and `.agents/skills`, and its global instructions live at `~/.codex/AGENTS.md`.
+
+```sh
+mkdir -p ~/.agents ~/.codex
+ln -s ~/.claude/skills ~/.agents/skills
+cat ~/.claude/CLAUDE.md ~/.claude/skills/output-styles/unslop.md > ~/.codex/AGENTS.md
+```
+
+The symlink keeps skills live. `AGENTS.md` has no include syntax, so that last line is a snapshot: re-run it when either file changes.
