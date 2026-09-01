@@ -24,7 +24,7 @@ This usually means writing simple, flat, and functional code, namespacing and co
 
 ## Rules for Teams and Sub-Agents
 
-Computer use and Browser use MUST be delegated to Sonnet sub-agents.
+Computer use and Browser use can ONLY EVER BE RAN BY GPT Terra model. If you are not GPT you must spin up a GPT Terra sub-agent.
 
 Never use Fable in sub-agents or teams! Always pick Opus or Sonnet for subagent in workflows.
 
