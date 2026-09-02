@@ -19,8 +19,8 @@ This usually means writing simple, flat, and functional code, namespacing and co
 - Do not make inline-comments. If you make or see an inline-comment, it signals that the code is not clear enough. Fix the code instead. Inline comments are a bad smell.
 - Function and Module comments are the bomb.  Add or update JSDoc for every exported (or non-trivial private) function, specify inputs and outputs:
   1. Single short line - explains the purpose/intent
-  2. (optional) 1 short paragraph, max 120 words - concisely describe complexity or  side effects or edge cases
-  3. @example - short 1-line usage examples (e.g., `myFunc(); // false`))
+  2. (optional, rare) 1 short paragraph, max 120 words - concisely describe complexity or  side effects or edge cases
+  3. @example - short 1-line usage examples (e.g., `myFunc(); // false`)), especially important for pure functions
 
 ## Browser Automation
 
