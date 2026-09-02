@@ -1,6 +1,7 @@
 ---
 name: pr-story
 description: Turn a pull request, branch diff, or any substantial changeset into a structured walkthrough. A story-driven onboarding/explainer HTML document to help with context-switching. This explains a changeset; it does not review or critique it. Use only when user explicitly asks for it.
+disable-model-invocation: true
 ---
 # PR Story
 

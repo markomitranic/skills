@@ -1,6 +1,7 @@
 ---
 name: pr-open
 description: File a concise pull request. Use when the user asks to file, open or create a PR.
+disable-model-invocation: true
 ---
 
 # File PR

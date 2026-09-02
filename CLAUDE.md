@@ -26,8 +26,4 @@ This usually means writing simple, flat, and functional code, namespacing and co
 
 Computer use and Browser use can ONLY EVER BE RAN BY GPT Terra model. If you are not GPT you must spin up a GPT Terra sub-agent.
 
-Never use Fable in sub-agents or teams! Always pick Opus or Sonnet for subagent in workflows.
-
-- Opus is good for most tasks that require taste and creativity - reasoning, thinking, design, decisions, critique, debugging.
-- Sonnet is much less expensive, only good for tightly specced mechanical grunt-work - searching, reading, running commands, parsing files, computer use, mechanical operations.
-
+Never use Fable or Sol in sub-agents or teams! Use Opus or GPT Terra instead.
