@@ -22,17 +22,6 @@ This usually means writing simple, flat, and functional code, namespacing and co
   2. (optional, rare) 1 short paragraph, max 120 words - concisely describe complexity or  side effects or edge cases
   3. @example - short 1-line usage examples (e.g., `myFunc(); // false`)), especially important for pure functions
 
-## Browser Automation
-
-Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
-
-Core workflow:
-
-1. `agent-browser open <url>` - Navigate to page
-2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
-3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
-4. Re-snapshot after page changes
-
 ## Rules for Teams and Sub-Agents
 
 Computer use and Browser use can ONLY EVER BE RAN BY GPT Terra model. If you are not GPT you must spin up a GPT Terra sub-agent.
