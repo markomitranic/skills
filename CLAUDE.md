@@ -24,6 +24,9 @@ This usually means writing simple, flat, and functional code, namespacing and co
 
 ## Rules for Teams and Sub-Agents
 
+Do not spin up teams and dynamic workflows, if the task can be done by you. Only defer to sub-agents when the task is too large or too noisy for your context.
+
 Computer use and Browser use can ONLY EVER BE RAN BY GPT Terra model. If you are not GPT you must spin up a GPT Terra sub-agent.
 
-Never use Fable or Sol in sub-agents or teams! Use Opus or GPT Terra instead.
+Never use Fable or Sol in sub-agents or teams! Use GPT Terra instead.
+
