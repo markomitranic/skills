@@ -1,7 +1,6 @@
 ---
 name: pr-triage
-description: Walk through unresolved review comments on the current branch's PR, one at a time. For each comment (human or AI bot like Greptile/Codex/Coderabbit), help the user decide whether it's a real issue worth fixing or a hallucination worth pushing back on, draft a rebuttal in their voice if it's noise, or propose a concrete fix if it's real. Use whenever the user wants to handle PR feedback, address review comments, respond to reviewers, triage Greptile/Codex/Coderabbit feedback, work through review threads, or "go through the PR comments" — even if they don't explicitly say "review". Especially valuable on PRs with multiple AI reviewers where signal-to-noise is mixed and the user needs help separating real bugs from confident-sounding nonsense.
-disable-model-invocation: true
+description: Only use when user explicitly asks for /pr-triage skill.
 ---
 # PR review triage
 

@@ -1,9 +1,10 @@
 ---
 name: pr-story
-description: Turn a pull request, branch diff, or any substantial changeset into a structured walkthrough. A story-driven onboarding/explainer HTML document to help with context-switching. This explains a changeset; it does not review or critique it. Use only when user explicitly asks for it.
-disable-model-invocation: true
+description: Only use when user explicitly asks for /pr-story skill.
 ---
 # PR Story
+
+Turn a pull request, branch diff, problem space or any substantial changeset into a structured walkthrough. A story-driven onboarding/explainer HTML document to help with context-switching. This explains a changeset; it does not review or critique it. Use only when user explicitly asks for it.
 
 GitHub's UI for reading a PR is bad. It displays changes in alphabetic order, broken down into commits, so a human reviewer needs to perform huge cognitive load to read the code out-of-order, in order to understand what was done and why - before they can begin to review side effects or architecture.
 

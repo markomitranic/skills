@@ -2,7 +2,6 @@
 name: jira-ticket
 description: Write a Jira ticket with a clear 3-part structure. Use this skill whenever the user asks you to write, draft, refine, restructure, or split Jira tickets, work items, user stories, backlog items, or sprint tickets — including when they paste raw context, transcripts, meeting notes, or product specs and want them turned into tickets.
 argument-hint: "What is the ticket about?"
-disable-model-invocation: true
 ---
 
 # Jira ticket writing
