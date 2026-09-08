@@ -16,17 +16,18 @@ This usually means writing simple, flat, and functional code, namespacing and co
 
 ### A word on code comments
 
-- Do not make inline-comments. If you make or see an inline-comment, it signals that the code is not clear enough. Fix the code instead. Inline comments are a bad smell.
 - Function and Module comments are the bomb.  Add or update JSDoc for every exported (or non-trivial private) function, specify inputs and outputs:
-  1. Single short line - explains the purpose/intent
-  2. (optional, rare) 1 short paragraph, max 120 words - concisely describe complexity or  side effects or edge cases
+  1. Headline line - explains the purpose/intent in under 100 characters
+  2. (optional, rare) 1 short paragraph, max 250 characters - concisely describe complexity or  side effects or edge cases
   3. @example - short 1-line usage examples (e.g., `myFunc(); // false`)), especially important for pure functions
+- Do not make inline-comments. If you make or see an inline-comment, it signals that the code is not clear enough. Fix the code instead. Inline comments are a bad smell. If the code isn't telling a story on its own, it means you failed to write good, readable, visually structured code.
+- Your comments must not have references to other files or concepts, they must be self-standing and understandable on their own.
 
 ## Rules for Teams and Sub-Agents
 
-Do not spin up teams and dynamic workflows, if the task can be done by you. Only defer to sub-agents when the task is too large or too noisy for your context.
+- Never use Fable in sub-agents or teams! Use Opus instead.
+- Computer use and Browser use can ONLY EVER BE RAN BY Sonnet model. If you are not Sonnet you must spin up a sub-agent.
 
-Computer use and Browser use can ONLY EVER BE RAN BY GPT Terra model. If you are not GPT you must spin up a GPT Terra sub-agent.
 
-Never use Fable or Sol in sub-agents or teams! Use GPT Terra instead.
 
+&nbsp;
