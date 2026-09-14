@@ -4,6 +4,17 @@ Personal collection of [Claude Code](https://docs.claude.com/en/docs/claude-code
 
 Alongside the skills, `output-styles/` holds custom output styles. An output style is appended to Claude Code's system prompt for every turn, so it fits rules that must apply to everything Claude writes rather than to one task.
 
+## Install
+
+```sh
+git clone https://github.com/markomitranic/skills.git ~/skills
+~/skills/install.sh
+```
+
+Clone anywhere you like — `install.sh` symlinks it to `~/.claude/skills`, where Claude Code looks for user-level skills. Cloning straight to `~/.claude/skills` works too; the script detects that and skips the symlink.
+
+Re-run it any time; every step is idempotent.
+
 ## Output styles
 
 `**output-styles/unslop.md`.** Writing style rules, applied to every response. Turn it on with `/config` → Output style → `unslop`, or set it in `~/.claude/settings.json`:
@@ -47,7 +58,7 @@ grep -rn outputStyle ~/.claude/settings.json .claude/settings*.json
 
 ## Layout
 
-This repo lives at `~/.claude/skills/`, which is where Claude Code looks for user-level skills. Each skill is a folder containing at least a `SKILL.md`:
+Claude Code reads user-level skills from `~/.claude/skills/`, which `install.sh` points at this repo. Each skill is a folder containing at least a `SKILL.md`:
 
 ```
 skills/
@@ -58,6 +69,8 @@ skills/
 ```
 
 Claude Code reads output styles from `~/.claude/output-styles/`, not from this folder, so the git hooks in `.githooks/` copy `output-styles/*.md` out on every commit, checkout, merge and push. Same trick they already use for `CLAUDE.md`.
+
+Those hooks need `core.hooksPath` pointed at `.githooks`, and **git never carries that setting across a clone** — it is repo-local config, not tracked content. A fresh clone therefore looks correct and silently syncs nothing. `install.sh` sets it, which is the main reason to run the script rather than just symlinking by hand.
 
 The `SKILL.md` frontmatter `description` is what Claude matches against to decide whether to invoke the skill — keep it specific and trigger-rich.
 
