@@ -28,6 +28,34 @@ This usually means writing simple, flat, and functional code, namespacing and co
 - Never use Fable in sub-agents or teams! Use Opus instead.
 - Computer use and Browser use can ONLY EVER BE RAN BY Sonnet model. If you are not Sonnet you must spin up a sub-agent.
 
+## Browser access
+
+Two browser stacks may exist on a machine: the T3 Code `preview_*` tools, which
+run in the attached client's browser, and Agent Browser, which runs on the
+machine itself. The `preview_*` tools are always listed whether or not a client
+is attached, so their presence in the tool list proves nothing. Probe, never
+guess:
+
+1. Probe: call `preview_status`. No answer within 10s counts as a no.
+2. Probe says yes -> use the `preview_*` tools.
+3. Probe says no -> use Agent Browser.
+4. Delegating browser work to a subagent -> tell it which one to use.
+
+A stack the user names in conversation beats the probe.
+
+### Using Agent Browser
+
+Run `agent-browser skills get core` before the first browser command in a
+session. The skills ship with the CLI and are version-matched, so they beat
+guessing from `agent-browser --help`.
+
+Core workflow:
+
+1. `agent-browser open <url>` - Navigate to page
+2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
+
 
 
 &nbsp;
