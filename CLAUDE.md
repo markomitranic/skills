@@ -49,6 +49,13 @@ Run `agent-browser skills get core` before the first browser command in a
 session. The skills ship with the CLI and are version-matched, so they beat
 guessing from `agent-browser --help`.
 
+Export a named session first, or you share one browser with every other agent
+on the machine and can navigate away from a page somebody else is working:
+
+```sh
+export AGENT_BROWSER_SESSION="$(agent-browser session id --scope worktree --prefix task)"
+```
+
 Core workflow:
 
 1. `agent-browser open <url>` - Navigate to page
