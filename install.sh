@@ -23,6 +23,19 @@ else
   echo "🔗 Symlinked $skills_link -> $repo_root"
 fi
 
+if [ -d "$HOME/.codex" ]; then
+  codex_skills="$HOME/.agents/skills"
+
+  if [ -e "$codex_skills" ] && [ ! -L "$codex_skills" ]; then
+    echo "⚠️  $codex_skills exists and is not a symlink. Move it aside and re-run." >&2
+    exit 1
+  fi
+
+  mkdir -p "$HOME/.agents"
+  ln -sfn "$repo_root" "$codex_skills"
+  echo "🔗 Codex found — symlinked $codex_skills -> $repo_root"
+fi
+
 "$repo_root/.githooks/sync-global.sh"
 
 echo "✅ Done. Skills load on the next session or after /clear."

@@ -11,7 +11,7 @@ git clone https://github.com/markomitranic/skills.git ~/skills
 ~/skills/install.sh
 ```
 
-Clone anywhere you like — `install.sh` symlinks it to `~/.claude/skills`, where Claude Code looks for user-level skills. Cloning straight to `~/.claude/skills` works too; the script detects that and skips the symlink.
+Clone anywhere you like — `install.sh` symlinks it to `~/.claude/skills`, where Claude Code looks for user-level skills, and to `~/.agents/skills` when Codex is installed. Cloning straight to `~/.claude/skills` works too; the script detects that and skips the symlink.
 
 Re-run it any time; every step is idempotent.
 
@@ -74,9 +74,30 @@ Those hooks need `core.hooksPath` pointed at `.githooks`, and **git never carrie
 
 The `SKILL.md` frontmatter `description` is what Claude matches against to decide whether to invoke the skill — keep it specific and trigger-rich.
 
-## Usage in other tools
+## Other coding agents
 
-Claude Code stays the source of truth. Other agents can read these files in place.
+Claude Code is the source of truth: this repo is the skills folder, `CLAUDE.md` is the instructions, `output-styles/` is the voice. Every other agent gets pointed back at those same files.
+
+Codex is the worked example. Three things have to travel, each a different trick:
+
+- **Skills** — Codex reads `~/.agents/skills`, so it gets a symlink to this repo and both agents stay live on one folder.
+- **Instructions** — Codex reads `~/.codex/AGENTS.md`, which has no include syntax. `sync-global.sh` copies `CLAUDE.md` into it on every commit, checkout, merge and push.
+- **Output style** — Codex has no equivalent concept, so that same sync appends `unslop.md` below the instructions, frontmatter stripped. `~/.codex/AGENTS.md` is generated output; edit the sources instead.
+
+`install.sh` wires all three, and skips the Codex half when `~/.codex` is absent:
+
+```sh
+~/skills/install.sh
+```
+
+By hand, the same thing:
+
+```sh
+mkdir -p ~/.agents
+ln -s ~/skills ~/.claude/skills            # Claude Code skills
+ln -s ~/skills ~/.agents/skills            # Codex skills
+sh ~/skills/.githooks/sync-global.sh       # CLAUDE.md + unslop -> ~/.codex/AGENTS.md
+```
 
 ### opencode
 
@@ -93,15 +114,3 @@ Only the output style needs wiring, since opencode has no equivalent concept:
 ```
 
 > **⚠️ Careful with `AGENTS.md`.** opencode picks the first match per category rather than merging, and `~/.config/opencode/AGENTS.md` beats `~/.claude/CLAUDE.md`. A global `AGENTS.md` silently shadows your `CLAUDE.md`. Leave it absent.
-
-### Codex
-
-Codex reads neither `~/.claude/skills` nor `CLAUDE.md`. Its skill roots are `~/.agents/skills` and `.agents/skills`, and its global instructions live at `~/.codex/AGENTS.md`.
-
-```sh
-mkdir -p ~/.agents ~/.codex
-ln -s ~/.claude/skills ~/.agents/skills
-cat ~/.claude/CLAUDE.md ~/.claude/skills/output-styles/unslop.md > ~/.codex/AGENTS.md
-```
-
-The symlink keeps skills live. `AGENTS.md` has no include syntax, so that last line is a snapshot: re-run it when either file changes.
