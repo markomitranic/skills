@@ -25,8 +25,7 @@ This usually means writing simple, flat, and functional code, namespacing and co
 
 ## Rules for Teams and Sub-Agents
 
-- Never use Fable in sub-agents or teams! Use Opus instead.
-- Computer use and Browser use can ONLY EVER BE RAN BY Sonnet model. If you are not Sonnet you must spin up a sub-agent.
+- Never use Fable in sub-agents!
 
 ## Browser access
 
