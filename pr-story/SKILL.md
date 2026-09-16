@@ -86,9 +86,9 @@ When done, do a quick, rough check of the chapter lengths, and resize them as ne
 
 Finally, we are ready to produce the actual HTML and all the figures in it. This must be a separate pass from the prose writing. You must load the artifact-design skill (via the Skill tool), and convert the markdown into HTML, while drawing illustrative figures in the labeled spaces.
 
-You take the markdown file, and then digest that into a visual HTML onboarding guide using the artifact-design skill. Print out the output path to the user, and open the file in the system default browser so that the user can easily access it.
+You take the markdown file, and then digest that into a visual HTML onboarding guide using the artifact-design skill. Finish writing the HTML, figures, image embedding, and reading-notes injection before starting Step 4. Share and open the file only after Step 4 finishes.
 
-There is no need to run QA passes or validation sub agents on the document. It is an internal report.
+The fresh-reader rewrite in Step 4 is required. No additional QA passes or validation subagents are needed for this internal report.
 
 **Figure Design**
 
@@ -217,3 +217,19 @@ Replace it with `$HOME/.claude/skills/pr-story/reading-notes.js`. Use the cli sc
 sed -i -e "/@@READING-NOTES@@/r $HOME/.claude/skills/pr-story/reading-notes.js" -e "/@@READING-NOTES@@/d" pr-artifacts/pr-story.html
 ```
 
+### Step 4: Fresh-reader rewrite
+
+After the finished HTML file exists on disk, spawn a separate subagent to rewrite it in place. This is a required final writing pass, not an optional review or a task for the original author to do itself. Use Opus or Sol, never Fable. Start with no inherited conversation history, using `fork_turns="none"` where supported. Give it the absolute HTML path and repository location, without your research notes or explanation of what the document means.
+
+Send this prompt, substituting the actual paths:
+
+> got this document as an explainer but i have fuck all idea what all this means lol. its written cryptically and very ai-sloppy. can you explain better please? update the file.
+>
+> Document: <absolute HTML path>
+> Repository: <absolute repository path>
+>
+> Preserve technical facts, links, code snippets, the page design, and working scripts. Consult the repository when a claim needs clarification; don't invent explanations. This is an explainer, not a code review. Do not delegate again.
+
+Wait for the subagent to finish.
+
+After the rewrite, print the output path and open the file in the system default browser. Publish only if the user asked for a shareable link.
