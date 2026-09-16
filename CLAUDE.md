@@ -31,17 +31,17 @@ This usually means writing simple, flat, and functional code, namespacing and co
 ## Browser access
 
 Two browser stacks may exist on a machine: the T3 Code `preview_*` tools, which
-run in the attached client's browser, and Agent Browser, which runs on the
-machine itself. The `preview_*` tools are always listed whether or not a client
-is attached, so their presence in the tool list proves nothing. Probe, never
-guess:
+run in the attached client's browser, and `agent-browser`, which runs on the
+machine itself.
 
-1. Probe: call `preview_status`. No answer within 10s counts as a no.
-2. Probe says yes -> use the `preview_*` tools.
-3. Probe says no -> use Agent Browser.
-4. Delegating browser work to a subagent -> tell it which one to use.
+1. Does the task require sharing the screen with the human?
+2. If yes (or human asked for it) use `preview_*` tools.
+3. If no (most tasks), use `agent-browser`.
+4. Delegating browser work to a subagent -> explicitly tell it which one to use.
 
-A stack the user names in conversation beats the probe.
+The `preview_*` tools are always listed whether or not a client
+is attached, so their presence in the tool list proves nothing. 
+You must probe - call `preview_status`. No answer within 10s counts as a no.
 
 ### Using Agent Browser
 
