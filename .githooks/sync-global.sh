@@ -10,14 +10,9 @@ strip_frontmatter() {
 cp -f "$repo_root/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 echo "💿 Global CLAUDE.md synced with this version."
 
-mkdir -p "$HOME/.claude/output-styles"
-cp -f "$repo_root"/output-styles/*.md "$HOME/.claude/output-styles/"
-echo "💿 Global /output-styles/ synced with this version."
-
 if [ -d "$HOME/.codex" ]; then
   {
     cat "$repo_root/CLAUDE.md"
-    strip_frontmatter "$repo_root/output-styles/unslop.md"
   } > "$HOME/.codex/AGENTS.md"
   echo "💿 Codex AGENTS.md synced — same rules, unslop style inlined."
 fi
