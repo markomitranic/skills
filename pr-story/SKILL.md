@@ -2,6 +2,7 @@
 name: pr-story
 description: Only use when user explicitly asks for /pr-story skill.
 ---
+
 # PR Story
 
 Turn a pull request, branch diff, problem space or any substantial changeset into a structured walkthrough. A story-driven onboarding/explainer HTML document to help with context-switching. This explains a changeset; it does not review or critique it. Use only when user explicitly asks for it.
@@ -53,7 +54,7 @@ Pro tips:
 
 ### Step 1: Research
 
-First, you do the research, gather all the information. Checkout, or pull PR stats, listing and metadata, so that you can be careful about accidentally reading a huge diff wholesale. Read the PR description and the associated Jira ticket and/or Figma (if any). Who uses it? Grep the changed symbols across the repo *outside* the diff: callers, dependents, config. Understanding this blast radius is what separates the page from a dumb file listing.
+First, you do the research, gather all the information. Checkout, or pull PR stats, listing and metadata, so that you can be careful about accidentally reading a huge diff wholesale. Read the PR description and the associated Jira ticket and/or Figma (if any). Who uses it? Grep the changed symbols across the repo _outside_ the diff: callers, dependents, config. Understanding this blast radius is what separates the page from a dumb file listing.
 
 Be careful not to load the obviously irrelevant files like lockfiles, vendored deps, `dist/`, generated code, snapshots, formatting and license sweeps — they don't deserve a mention on the page.
 
@@ -96,13 +97,13 @@ We must rely on static figures to lower cognitive load, as humans are visual lea
 
 - Chapter paragraphs, code and the figures should be interwoven.
 - A figure accompanies a specific piece of prose and shows the thing the prose  
-is explaining. It myst always point at the concept from neighbouring paragraphs.
+  is explaining. It myst always point at the concept from neighbouring paragraphs.
 - One idea per figure. A figure that needs a legend is usually two figures.
 - Draw the actual mechanism, not a metaphor. Boxes are real components, arrows  
-are real calls or data.
+  are real calls or data.
 - Aim for &gt;20 words of text inside a figure. Detail belongs in the prose, figures are for illustration purposes.
 
-**Images (escape hatch).** 
+**Images (escape hatch).**
 
 Most stories carry no image — a drawn figure explains a mechanism much better than pixels do. But if the user asks for images, or provides them, or you decide they are crucial for understanding the PR (fx. a PR that changes the logo), you can add them in addition to figures using the `INSERT-IMAGE` construct. 16MB is the page ceiling — so downscale anything over ~3MB.
 
@@ -119,100 +120,103 @@ The deliverable is the local file. If the user asks for a shareable link, publis
 This is the page's design system — tokens, type and components are settled; the page-writer types content into them. Anything the shell doesn't cover (figure internals, a one-off layout) is styled in its spirit: same tokens, same restraint.
 
 ```html
-[[ORCA_RICH_MD:faae59194dc83f78b5bb72b34829e22a:block-html:%3Cstyle%3E]]
-:root {
-  --ground:#F1F4F3; --surface:#FFFFFF; --ink:#14201E; --muted:#5D6B68;
-  --line:#D4DCD9; --line-strong:#A9B7B3;
-  --accent:#0B6E6A; --accent-soft:#E0EDEB;
-  --warn:#8F5200; --warn-soft:#F8EEDD;
-  --add-bg:#E7F1E8; --add-ink:#1D5A2B; --del-bg:#FAE6E6; --del-ink:#8B2B2B;
-  --font-display:"Helvetica Neue",Helvetica,-apple-system,"Segoe UI",Arial,sans-serif;
-  --font-body:Charter,"Iowan Old Style",Palatino,Georgia,serif;
-  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-}
-* { box-sizing:border-box }
-body { margin:0; background:var(--ground); color:var(--ink);
-       font:17px/1.65 var(--font-body) }
-.page { max-width:960px; margin:0 auto; padding:0 24px 96px }
-a { color:var(--accent); text-underline-offset:2px }
-p { text-wrap:pretty; }
-code { font-family:var(--font-mono); font-size:.86em; background:var(--accent-soft);
-       color:#0A4A47; padding:.1em .34em; border-radius:3px }
-.tip { border-bottom:1px dotted var(--line-strong); cursor:help }
-
-header.masthead { border-top:3px solid var(--accent); padding-top:28px; margin-top:56px }
-h1 { font-family:var(--font-display); font-weight:700; letter-spacing:-.025em;
-     font-size:clamp(30px,5.2vw,44px); line-height:1.08; text-wrap:balance; margin:0 0 18px }
-.meta { font:12px/1.9 var(--font-mono); color:var(--muted); margin:0 0 26px }
-.blurb { font-family:var(--font-display); font-size:clamp(18px,2.6vw,21px); line-height:1.45;
-         margin:0; padding:20px 0 22px 22px; border-left:3px solid var(--line-strong) }
-
-nav.toc { margin:40px 0 8px; padding:16px 20px; background:var(--surface);
-          border:1px solid var(--line); border-radius:4px }
-section { margin-top:56px; display:flex; flex-direction:column; gap:20px }
-section > * { margin:0 }
-h2 { font-family:var(--font-display); font-size:clamp(22px,3.4vw,28px); font-weight:700;
-     letter-spacing:-.02em; text-wrap:balance; padding-bottom:12px;
-     border-bottom:1px solid var(--line) }
-h2 .ch-num { font:0.55em var(--font-mono); color:var(--line-strong);
-             letter-spacing:.05em; margin-right:10px; vertical-align:2px }
-h2 .ch-tag { font:10.5px var(--font-mono); font-weight:400; text-transform:uppercase;
-             letter-spacing:.08em; color:var(--muted); background:var(--surface);
-             border:1px solid var(--line-strong); border-radius:3px;
-             padding:3px 8px; margin-left:12px; vertical-align:4px; white-space:nowrap }
-h2 .ch-tag.business { color:var(--accent); border-color:var(--accent);
-                      background:var(--accent-soft) }
-
-.card { background:var(--surface); border:1px solid var(--line);
-        border-radius:4px; overflow:hidden }
-.card-head { font-family:var(--font-mono); font-size:11.5px; color:var(--muted);
-             background:#FAFBFB; border-bottom:1px solid var(--line);
-             padding:8px 14px; white-space:nowrap; overflow-x:auto }
-.card-body { overflow-x:auto; padding:10px 0 }
-pre { margin:0; font:12.5px/1.7 var(--font-mono); tab-size:2; white-space:normal }
-pre .ln { display:block; min-height:1.7em; padding:0 14px; white-space:pre; width:max-content; min-width:100% }
-pre .add { background:var(--add-bg); color:var(--add-ink) }
-pre .del { background:var(--del-bg); color:var(--del-ink) }
-pre .ctx { color:#3C4A47 }
-.cmd .card-head { background:var(--ink); color:#C9D6D3; border-bottom:none;
-                  text-transform:uppercase; letter-spacing:.11em }
-.cmd .card-body { background:var(--ink) } .cmd pre .ctx { color:#EAF1EF }
-
-figure { margin:8px 0; display:flex; flex-direction:column; gap:12px }
-.fig-frame { background:var(--surface); border:1px solid var(--line);
-             border-radius:4px; padding:22px 20px; overflow-x:auto }
-figcaption { font:11.5px/1.6 var(--font-mono); color:var(--muted) }
-svg { display:block } svg text { font-family:var(--font-mono) }
+:root { --ground:#F1F4F3; --surface:#FFFFFF; --ink:#14201E; --muted:#5D6B68;
+--line:#D4DCD9; --line-strong:#A9B7B3; --accent:#0B6E6A; --accent-soft:#E0EDEB;
+--warn:#8F5200; --warn-soft:#F8EEDD; --add-bg:#E7F1E8; --add-ink:#1D5A2B;
+--del-bg:#FAE6E6; --del-ink:#8B2B2B; --font-display:"Helvetica
+Neue",Helvetica,-apple-system,"Segoe UI",Arial,sans-serif;
+--font-body:Charter,"Iowan Old Style",Palatino,Georgia,serif;
+--font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; } * {
+box-sizing:border-box } body { margin:0; background:var(--ground);
+color:var(--ink); font:17px/1.65 var(--font-body) } .page { max-width:960px;
+margin:0 auto; padding:0 24px 96px } a { color:var(--accent);
+text-underline-offset:2px } p { text-wrap:pretty; } code {
+font-family:var(--font-mono); font-size:.86em; background:var(--accent-soft);
+color:#0A4A47; padding:.1em .34em; border-radius:3px } .tip { border-bottom:1px
+dotted var(--line-strong); cursor:help } header.masthead { border-top:3px solid
+var(--accent); padding-top:28px; margin-top:56px } h1 {
+font-family:var(--font-display); font-weight:700; letter-spacing:-.025em;
+font-size:clamp(30px,5.2vw,44px); line-height:1.08; text-wrap:balance; margin:0
+0 18px } .meta { font:12px/1.9 var(--font-mono); color:var(--muted); margin:0 0
+26px } .blurb { font-family:var(--font-display);
+font-size:clamp(18px,2.6vw,21px); line-height:1.45; margin:0; padding:20px 0
+22px 22px; border-left:3px solid var(--line-strong) } nav.toc { margin:40px 0
+8px; padding:16px 20px; background:var(--surface); border:1px solid var(--line);
+border-radius:4px } section { margin-top:56px; display:flex;
+flex-direction:column; gap:20px } section > * { margin:0 } h2 {
+font-family:var(--font-display); font-size:clamp(22px,3.4vw,28px);
+font-weight:700; letter-spacing:-.02em; text-wrap:balance; padding-bottom:12px;
+border-bottom:1px solid var(--line) } h2 .ch-num { font:0.55em var(--font-mono);
+color:var(--line-strong); letter-spacing:.05em; margin-right:10px;
+vertical-align:2px } h2 .ch-tag { font:10.5px var(--font-mono); font-weight:400;
+text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+background:var(--surface); border:1px solid var(--line-strong);
+border-radius:3px; padding:3px 8px; margin-left:12px; vertical-align:4px;
+white-space:nowrap } h2 .ch-tag.business { color:var(--accent);
+border-color:var(--accent); background:var(--accent-soft) } .card {
+background:var(--surface); border:1px solid var(--line); border-radius:4px;
+overflow:hidden } .card-head { font-family:var(--font-mono); font-size:11.5px;
+color:var(--muted); background:#FAFBFB; border-bottom:1px solid var(--line);
+padding:8px 14px; white-space:nowrap; overflow-x:auto } .card-body {
+overflow-x:auto; padding:10px 0 } pre { margin:0; font:12.5px/1.7
+var(--font-mono); tab-size:2; white-space:normal } pre .ln { display:block;
+min-height:1.7em; padding:0 14px; white-space:pre; width:max-content;
+min-width:100% } pre .add { background:var(--add-bg); color:var(--add-ink) } pre
+.del { background:var(--del-bg); color:var(--del-ink) } pre .ctx { color:#3C4A47
+} .cmd .card-head { background:var(--ink); color:#C9D6D3; border-bottom:none;
+text-transform:uppercase; letter-spacing:.11em } .cmd .card-body {
+background:var(--ink) } .cmd pre .ctx { color:#EAF1EF } figure { margin:8px 0;
+display:flex; flex-direction:column; gap:12px } .fig-frame {
+background:var(--surface); border:1px solid var(--line); border-radius:4px;
+padding:22px 20px; overflow-x:auto } figcaption { font:11.5px/1.6
+var(--font-mono); color:var(--muted) } svg { display:block } svg text {
+font-family:var(--font-mono) }
 ```
 
 Body skeleton:
 
 ```html
-<body><div class="page">
-  <header class="masthead">
-    <h1>…</h1> <p class="meta">repo · #PR · branch · files (+/−)</p>
-    <p class="blurb">the moral</p>
-  </header>
-  <nav class="toc">…numbered links to every section…</nav>
-  <section id="intro">…prose… <figure><div class="fig-frame">hero</div>
-    <figcaption>…</figcaption></figure></section>
-  <section id="{slug}">
-    <h2><span class="ch-num">01</span>…title…<span class="ch-tag business">business logic</span></h2>
-    …prose…
-    <div class="card"><div class="card-head">path.ts:42</div>
-      <div class="card-body"><pre><span class="ln add">+ …</span></pre></div></div>
-    …figure…
-  </section>
-</div>
-<script>
-@@READING-NOTES@@
-</script>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <h1>…</h1>
+      <p class="meta">repo · #PR · branch · files (+/−)</p>
+      <p class="blurb">the moral</p>
+    </header>
+    <nav class="toc">…numbered links to every section…</nav>
+    <section id="intro">
+      …prose…
+      <figure>
+        <div class="fig-frame">hero</div>
+        <figcaption>…</figcaption>
+      </figure>
+    </section>
+    <section id="{slug}">
+      <h2>
+        <span class="ch-num">01</span>…title…<span class="ch-tag business"
+          >business logic</span
+        >
+      </h2>
+      …prose…
+      <div class="card">
+        <div class="card-head">path.ts:42</div>
+        <div class="card-body">
+          <pre><span class="ln add">+ …</span></pre>
+        </div>
+      </div>
+      …figure…
+    </section>
+  </div>
+  <script>
+    @@READING-NOTES@@
+  </script>
 </body>
 ```
 
 The `@@READING-NOTES@@` needle is a special JavaScript injection you must perform after writing the HTML.
 
 Replace it with `$HOME/.claude/skills/pr-story/reading-notes.js`. Use the cli script below, so the large file content never pollutes your context. Do not open the file, just ensure that `sed` points to your HTML file, and `sed` will inject it:
+
 ```bash
 sed -i -e "/@@READING-NOTES@@/r $HOME/.claude/skills/pr-story/reading-notes.js" -e "/@@READING-NOTES@@/d" pr-artifacts/pr-story.html
 ```
