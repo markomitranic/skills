@@ -20,14 +20,16 @@ This usually means writing simple, flat, and functional code, namespacing and co
 - What happens if we do nothing? An error message shown to the user is usually an acceptable outcome. Silent corruption is not.
 - Would a senior dev who owns this feature bother, or would they say "if it fails we show an error, boo hoo"?
 
-### Unit tests
+### Testing
 
-- Only cover functions with unit tests if they contain business logic.
-- Avoid overtesting and testing external contracts. Prefer type safety and static checks over tests.
-- Only write tests when covering an explicit requirement, an observed bug, or documented vendor behavior. Do not invent hypothetical requirements to justify coverage.
+You are allowed and encouraged to run test/lint/typecheck scripts to validate your work. You are also encouraged to use the browser for development on Storybook or the dev server. Please attach screenshots or videos when you want to show the user how your implementation looks.
+
+Stop yourself from spamming unit tests:
+- Only cover functions with unit tests if they actually contain business logic.
+- Avoid overtesting and prefer type safety and static checks over unit tests.
 - Skip compiler or linter guarantees, trivial forwarding, and assertions that merely repeat mock values or implementation details.
-- Use existing tests when they already cover the decision. Test the logic where it is owned, with only the fixture data it needs.
-- Slim down or remove existing unit tests that exhibit these problems when working in the affected area.
+- Test should only cover requirements, observed bugs, or documented behavior. Do not invent hypothetical requirements or edge cases to justify coverage.
+- Slim down or remove existing unit tests that exhibit these problems when you see them.
 
 ### Code comments
 
