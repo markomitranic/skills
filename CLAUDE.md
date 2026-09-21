@@ -25,6 +25,7 @@ This usually means writing simple, flat, and functional code, namespacing and co
 You are allowed and encouraged to run test/lint/typecheck scripts to validate your work. You are also encouraged to use the browser for development on Storybook or the dev server. Please attach screenshots or videos when you want to show the user how your implementation looks.
 
 Stop yourself from spamming unit tests:
+
 - Only cover functions with unit tests if they actually contain business logic.
 - Avoid overtesting and prefer type safety and static checks over unit tests.
 - Skip compiler or linter guarantees, trivial forwarding, and assertions that merely repeat mock values or implementation details.
@@ -39,11 +40,6 @@ Stop yourself from spamming unit tests:
   2. (optional, rare) 1 short paragraph, max 250 characters - concisely describe complexity or side effects or edge cases
   3. @example - short 1-line usage examples (e.g., `myFunc(); // false`)), especially important for pure functions
 - Your comments must not have references to other files or concepts, they must be self-standing and understandable on their own.
-
-## Rules for Teams and Sub-Agents
-
-- Never use Fable/Astra in sub-agents! Use Opus/Sol instead.
-- Computer use and Browser use can ONLY EVER BE RAN BY Sonnet/Terra model. If you are not Sonnet/Terra you must spin up a sub-agent.
 
 ## Browser access
 
