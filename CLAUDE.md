@@ -55,18 +55,19 @@ Stop yourself from spamming unit tests:
 
 ## Browser access
 
-Two browser stacks may exist on a machine: the T3 Code `preview_*` tools, which
-run in the attached client's browser, and `agent-browser`, which runs on the
-machine itself.
+Default: `agent-browser`, which runs on this machine. Use it for all browser work,
+including screenshots and videos you attach to your replies.
 
-1. Does the task require sharing the screen with the human?
-2. If yes (or human asked for it) use `preview_*` tools.
-3. If no (most tasks), use `agent-browser`.
-4. Delegating browser work to a subagent -> explicitly tell it which one to use.
+Use the T3 Code `preview_*` tools only when the user explicitly asks for a preview
+or asks you to share the screen. Wanting to show the user a result is not a request
+for preview.
 
-The `preview_*` tools are always listed whether or not a client
-is attached, so their presence in the tool list proves nothing.
-You must probe - call `preview_status`. No answer within 10s counts as a no.
+The `preview_*` tools are listed even when no client is attached. Only when the user
+asked for preview, call `preview_status` first. No answer within 10s means no client
+is attached: tell the user and use `agent-browser` instead.
+
+When delegating browser work to a subagent, tell it to use `agent-browser`, unless
+the user asked for preview.
 
 ### Using Agent Browser
 
