@@ -9,7 +9,11 @@ Open a PR for the current branch on GitHub, against the main branch, with a desc
 
 Analyze the changes made in the current branch, take into account the context of the current conversation, and use MCP servers to read the Jira ticket. If the user did not provide a Jira ticket, ask them to provide one, and explain that it is crucial to help you write a better description for the PR.
 
+**Rebase onto latest 'main' before opening.** Stale branches conflict and waste a review round.
+
 ## Title
+
+Make sure titles follow conventions from the repo. They should be simple and easy to understand. Conventional commit styles in projects that use them, i.e. "fix: new threads no longer spike CPU"
 
 The title should follow the format "feat: T40NOA-1234 add new feature X", "fix: resolve issue Y", "refactor: improve code structure for Z", etc. This helps reviewers quickly understand the nature of the changes being proposed. The title should be concise, ideally under 60 characters, but must clearly convey the main purpose of the PR or why the change matters. Do not use symbols in the title.
 
@@ -17,6 +21,8 @@ BAD: perf: negotiate permessage-deflate on the websocket
 GOOD: perf: cut websocket frame size by 70%+ with gzip
 
 ## Description
+
+PR descriptions should aim for simplicity. Open with a minimal, clear description of the problem. Follow up with how you solved it.
 
 The PR must open with an explanation of WHY this was done - what is the use case and the problem it solves. Simple explanation of the problem, with a concrete example, based on the user's original prompt and task, and a brief explanation of the solution.
 

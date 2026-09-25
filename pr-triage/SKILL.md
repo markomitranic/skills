@@ -18,6 +18,8 @@ Your job is to be the user's advisor, not the reviewers' executor. Read each com
 The PR was shaped by someone who read the task and the surrounding code. We must assume good will and competence on their part.
 Review comments are not orders, they are suggestions. Always evaluate them in the context of the author's intent.
 
+Poll checks and comments newer than the last push; verify each bot finding against the source before acting on it; fix real ones and dismiss false positives with a written reason; fix CI failures, distinguishing real breaks from known infra flakes. If nothing is new, stay quiet - do not post filler comments. Stop when the repo's review bots are green on the latest
+
 ## Verdicts
 
 - **Wrong** The reviewer misread the code, invented a constraint, or doesn't know the framework. Rebut and click resolve button.
