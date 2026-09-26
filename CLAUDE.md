@@ -24,7 +24,19 @@ This usually means writing simple, flat, and functional code, namespacing and co
 - Inferred types are better than annotations. `any` is the enemy.
 - Avoid one-line functions that are just casting wrappers.
 - Proactively remove unused code, tests and dependencies, we don't want to leave dead code around unless we have a good reason for it (fx. public api or future plans)
-- Don't run dev server or build commands (e.g., `bun run dev`) - assume it's already running or ask.
+- Don't run production build commands unless asked. Dev servers are fine, see below.
+
+### Dev servers
+
+You may start dev servers. Other worktrees and agents share this machine, so check before you start and clean up when you are done.
+
+- Before starting, look for a server this worktree already runs and reuse it. `ss -ltnp` lists listeners; `readlink /proc/<pid>/cwd` shows which worktree owns one.
+- If the default port is taken by another worktree, pick a free port with the project's `--port` flag or `PORT` env var.
+- If changing the port needs more than that (monorepos with ports wired through several configs), don't hack the config. Ask me whether you may kill the other worktree's process.
+- Decide up front whether the server is temporary or long-lived:
+  - Temporary (a screenshot, a quick check): no TTL. Kill it as soon as you have what you need.
+  - Long-lived (testing, iterating, brainstorming with me): wrap it in a 30 minute TTL, e.g. `timeout 30m bun run dev --port 3001`, run in the background. Restart it the same way if it expires while still needed.
+- When the work ends with a PR, kill every server you started. Never leave one running without a TTL.
 
 ### Keep It Simple, Stupid
 
