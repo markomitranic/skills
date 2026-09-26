@@ -32,7 +32,7 @@ You may start dev servers. Other worktrees and agents share this machine, so che
 
 - Before starting, look for a server this worktree already runs and reuse it. `ss -ltnp` lists listeners; `readlink /proc/<pid>/cwd` shows which worktree owns one.
 - If the default port is taken by another worktree, pick a free port with the project's `--port` flag or `PORT` env var.
-- If changing the port needs more than that (monorepos with ports wired through several configs), don't hack the config. Ask me whether you may kill the other worktree's process.
+- If changing the port needs more than that (monorepos with ports wired through several configs), stop and ask. Say why you need the server, then offer three options: change the config, kill the other worktree's process, or skip the dev server.
 - Decide up front whether the server is temporary or long-lived:
   - Temporary (a screenshot, a quick check): no TTL. Kill it as soon as you have what you need.
   - Long-lived (testing, iterating, brainstorming with me): wrap it in a 30 minute TTL, e.g. `timeout 30m bun run dev --port 3001`, run in the background. Restart it the same way if it expires while still needed.
