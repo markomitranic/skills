@@ -33,10 +33,11 @@ You may start dev servers. Other worktrees and agents share this machine, so che
 - Before starting, look for a server this worktree already runs and reuse it. `ss -ltnp` lists listeners; `readlink /proc/<pid>/cwd` shows which worktree owns one.
 - If the default port is taken by another worktree, pick a free port with the project's `--port` flag or `PORT` env var.
 - If changing the port needs more than that (monorepos with ports wired through several configs), stop and ask. Say why you need the server, then offer three options: change the config, kill the other worktree's process, or skip the dev server.
-- Decide up front whether the server is temporary or long-lived:
-  - Temporary (a screenshot, a quick check): no TTL. Kill it as soon as you have what you need.
-  - Long-lived (testing, iterating, brainstorming with me): wrap it in a 30 minute TTL, e.g. `timeout 30m bun run dev --port 3001`, run in the background. Restart it the same way if it expires while still needed.
-- When the work ends with a PR, kill every server you started. Never leave one running without a TTL.
+- Start servers only with your harness's own background option (e.g. `run_in_background`), so the process dies with your session. Never detach it: no `nohup`, `setsid`, `disown`, trailing `&`, `tmux`, `screen` or `pm2`. A detached server outlives the thread and nobody cleans it up.
+- Every server gets a `timeout` TTL, as a backstop in case the harness doesn't kill it:
+  - Temporary (a screenshot, a quick check): `timeout 5m bun run dev --port 3001`. Kill it as soon as you have what you need.
+  - Long-lived (testing, iterating, brainstorming with me): `timeout 30m bun run dev --port 3001`. Restart it the same way if it expires while still needed.
+- When the work ends with a PR, kill every server you started.
 
 ### Keep It Simple, Stupid
 
