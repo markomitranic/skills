@@ -101,3 +101,13 @@ Core workflow:
 2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
 3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
 4. Re-snapshot after page changes
+
+**Using the user's own browser with agent-browser**
+
+!! Only when the user explicitly asks you to use their Brave (for their logins).
+User should have `brave://inspect/#remote-debugging` turned on.
+
+1. Read the port and path: `cat ~/Library/Application\ Support/BraveSoftware/Brave-Origin/DevToolsActivePort` (line 1 is the port, line 2 is `/devtools/browser/<uuid>`).
+2. Connect with the full WebSocket URL. `--cdp <port>` and `--auto-connect` fail in toggle mode, and the UUID changes each time Brave restarts: `agent-browser --cdp "ws://127.0.0.1:<port>/devtools/browser/<uuid>" --pin-tab tab new <url>`
+3. Work only in your pinned tab. Never close, navigate or read the user's own tabs.
+4. When done, run `agent-browser close` and remind the user to turn the toggle off, because while it's on any local process can control Brave.
