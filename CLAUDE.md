@@ -108,6 +108,7 @@ Please use dev servers. Other worktrees and agents share this machine, so check 
 - Before starting, look for a server this worktree already runs and reuse it. `ss -ltnp` lists listeners; `readlink /proc/<pid>/cwd` shows which worktree owns one.
 - If the default port is taken by another worktree, pick a free port with the project's `--port` flag or `PORT` env var.
 - If changing the port needs more than that (monorepos with ports wired through several configs), stop and ask. Say why you need the server, then offer three options: change the config, kill the other worktree's process, or skip the dev server.
+- In monorepos, don't run the entire repo if you don't need to. Filter out and run the parts/apps that you actually need.
 - Start servers only with your harness's own background option (e.g. `run_in_background`), so the process dies with your session. Never detach it: no `nohup`, `setsid`, `disown`, trailing `&`, `tmux`, `screen` or `pm2`. A detached server outlives the thread and nobody cleans it up.
 - Every server gets a `timeout` TTL, as a backstop in case the harness doesn't kill it:
   - Temporary (a screenshot, a quick check): `timeout 5m bun run dev --port 3001`. Kill it as soon as you have what you need.
