@@ -1,15 +1,17 @@
 ## AI work
 
-- Never touch production, live databases, or daily-driver build/preview channels unless explicitly told to. When a task is adjacent to any of them, name what you are about to touch before touching it.
+- Never touch production or live databases unless explicitly told to. When a task is adjacent to any of them, name what you are about to touch and warn before touching it.
 - If the user names a model, use the latest version of that model family for the work they describe. "Use Opus" means the latest Opus. This applies to the main session, subagents, and any tool that takes a model parameter.
 - When a step doesn't need my input, keep going. Put status notes in the same message as your next action. Stop and ask only when you can't continue without me, or before anything destructive: deleting data, force-pushing, or changing anything outside this repository.
 
 ## Visual and design work
 
 - Make UI, layout, and copy changes directly. Create mocks only when explicitly requested.
-- Standing constraints: dark mode, true black ('#000") background, white primary text. Information-dense, no decorative card/pill chrome, no light-gray subtitle lines above sections. Minimal copy. No em dashes.
-- No sloppy UX work that looks like it belongs in 2003, not even in POCs. I expect polished, well executed UX experiences that feel native.
-- Avoid continuously repainting CSS animations (pulse, shimmer, blur, spinners); they peg the GPU high-refresh displays.
+- Information-dense, no decorative card/pill chrome, no light-gray subtitle lines above sections. Minimal copy. No em dashes.
+- No sloppy UX work that looks like it belongs in 2003, not even in POCs. I expect polished, well executed UX experiences that feel robust, expensive, production-ready and native.
+- Attention to detail and interaction, loading states, error states, overlapping edge cases.
+- Actively participate in the design process by suggesting additional features that would increase the percieved quality of the UI.
+- Watch out for animations that are tough on GPU and optimize them so that high refresh displays don't peg the GPU so hard.
 
 ## Coding preferences
 
@@ -25,19 +27,6 @@ This usually means writing simple, flat, and functional code, namespacing and co
 - Avoid one-line functions that are just casting wrappers.
 - Proactively remove unused code, tests and dependencies, we don't want to leave dead code around unless we have a good reason for it (fx. public api or future plans)
 - Don't run production build commands unless asked. Dev servers are fine, see below.
-
-### Dev servers
-
-You may start dev servers. Other worktrees and agents share this machine, so check before you start and clean up when you are done.
-
-- Before starting, look for a server this worktree already runs and reuse it. `ss -ltnp` lists listeners; `readlink /proc/<pid>/cwd` shows which worktree owns one.
-- If the default port is taken by another worktree, pick a free port with the project's `--port` flag or `PORT` env var.
-- If changing the port needs more than that (monorepos with ports wired through several configs), stop and ask. Say why you need the server, then offer three options: change the config, kill the other worktree's process, or skip the dev server.
-- Start servers only with your harness's own background option (e.g. `run_in_background`), so the process dies with your session. Never detach it: no `nohup`, `setsid`, `disown`, trailing `&`, `tmux`, `screen` or `pm2`. A detached server outlives the thread and nobody cleans it up.
-- Every server gets a `timeout` TTL, as a backstop in case the harness doesn't kill it:
-  - Temporary (a screenshot, a quick check): `timeout 5m bun run dev --port 3001`. Kill it as soon as you have what you need.
-  - Long-lived (testing, iterating, brainstorming with me): `timeout 30m bun run dev --port 3001`. Restart it the same way if it expires while still needed.
-- When the work ends with a PR, kill every server you started.
 
 ### Keep It Simple, Stupid
 
@@ -111,3 +100,16 @@ User should have `brave://inspect/#remote-debugging` turned on.
 2. Connect with the full WebSocket URL. `--cdp <port>` and `--auto-connect` fail in toggle mode, and the UUID changes each time Brave restarts: `agent-browser --cdp "ws://127.0.0.1:<port>/devtools/browser/<uuid>" --pin-tab tab new <url>`
 3. Work only in your pinned tab. Never close, navigate or read the user's own tabs.
 4. When done, run `agent-browser close` and remind the user to turn the toggle off, because while it's on any local process can control Brave.
+
+## Dev servers
+
+Please use dev servers. Other worktrees and agents share this machine, so check before you start and clean up when you are done.
+
+- Before starting, look for a server this worktree already runs and reuse it. `ss -ltnp` lists listeners; `readlink /proc/<pid>/cwd` shows which worktree owns one.
+- If the default port is taken by another worktree, pick a free port with the project's `--port` flag or `PORT` env var.
+- If changing the port needs more than that (monorepos with ports wired through several configs), stop and ask. Say why you need the server, then offer three options: change the config, kill the other worktree's process, or skip the dev server.
+- Start servers only with your harness's own background option (e.g. `run_in_background`), so the process dies with your session. Never detach it: no `nohup`, `setsid`, `disown`, trailing `&`, `tmux`, `screen` or `pm2`. A detached server outlives the thread and nobody cleans it up.
+- Every server gets a `timeout` TTL, as a backstop in case the harness doesn't kill it:
+  - Temporary (a screenshot, a quick check): `timeout 5m bun run dev --port 3001`. Kill it as soon as you have what you need.
+  - Long-lived (testing, iterating, brainstorming with me): `timeout 30m bun run dev --port 3001`. Restart it the same way if it expires while still needed.
+- When the work ends with a PR, kill every server you started.
