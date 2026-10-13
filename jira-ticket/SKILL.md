@@ -1,6 +1,6 @@
 ---
 name: jira-ticket
-description: Use whenever asked to create a jira ticket, or access jira or interact with it in any way.
+description: Use whenever asked to write a jira ticket.
 argument-hint: "What is the ticket about?"
 ---
 
@@ -22,7 +22,7 @@ When the user dumps raw context (a transcript, a meeting note, a Slack thread, a
    - Technical constraints and dependencies
    - Stakeholders or teams impacted
 2. Initiate a team of agents to perform deeper research/planning, analyse their responses, and synthesize the information:
-   - Sub-agent to use the Atlassian skills and MCP tools to look up relevant Confluence pages or Jira tickets that duplicate or relate to the request.
+   - Sub-agent to look up relevant Confluence pages or Jira tickets that duplicate or relate to the request.
    - Sub-agent to access the codebase or documentation to understand technical constraints or terms.
    - When results are in, analyse the problem from multiple angles and identify **information gaps** that would result in vague or incomplete ticket
 3. Ask the user clarifying questions until all gaps are filled and decisions are made. Use `AskUserQuestion` tool.
