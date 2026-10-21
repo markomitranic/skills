@@ -4,6 +4,15 @@
 - If the user names a model, use the latest version of that model family for the work they describe. "Use Opus" means the latest Opus. This applies to the main session, subagents, and any tool that takes a model parameter.
 - When a step doesn't need my input, keep going. Put status notes in the same message as your next action. Stop and ask only when you can't continue without me, or before anything destructive: deleting data, force-pushing, or changing anything outside this repository.
 
+## Brain
+
+I store my "personal brain" context warehouse in `~/obsidian`. You are encouraged to use it and OWN IT, on the side, while working on any project.
+
+- Run `git -C ~/obsidian pull --rebase` before reading. Commit and push to `main` after editing otherwise it will get lost. The personal brain is excluded from requiring you to verify with me before you act.
+- Pre-load the structure to give you inspiration: `rg -m1 --no-heading -r '$1' '^description:\s*(.*)' ~/obsidian/docs -g '*.mdx' | sort`.
+- Search it proactively at any time using `rg`. Always search before writing, helps colocate and deduplicate knowledge.
+- Use it proactively for any personal notetaking/preferences/memories/ideas/context, whatever else you see fit, without me having to ask.
+
 ## Visual and design work
 
 - Make UI, layout, and copy changes directly. Create mocks only when explicitly requested.
