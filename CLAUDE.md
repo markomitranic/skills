@@ -12,6 +12,7 @@ I store my "personal brain" context warehouse in `~/obsidian`. You are encourage
 - Pre-load the structure to give you inspiration: `rg -m1 --no-heading -r '$1' '^description:\s*(.*)' ~/obsidian/docs -g '*.mdx' | sort`.
 - Search it proactively at any time using `rg`. Always search before writing, helps colocate and deduplicate knowledge.
 - Use it proactively for any personal notetaking/preferences/memories/ideas/context, whatever else you see fit, without me having to ask.
+- Keep it lean. Whenever you touch a note, delete or shorten anything obsolete, outdated, duplicated or no longer relevant. Merge overlapping notes. Pruning is as much your job as writing.
 
 ## Visual and design work
 
