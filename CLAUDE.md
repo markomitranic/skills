@@ -124,3 +124,4 @@ Please use dev servers. Other worktrees and agents share this machine, so check 
   - Temporary (a screenshot, a quick check): `timeout 5m bun run dev --port 3001`. Kill it as soon as you have what you need.
   - Long-lived (testing, iterating, brainstorming with me): `timeout 30m bun run dev --port 3001`. Restart it the same way if it expires while still needed.
 - When the work ends with a PR, kill every server you started.
+- I prefer Tailscale HTTPS over Cloudflare tunnel when possible, but both are okay.
