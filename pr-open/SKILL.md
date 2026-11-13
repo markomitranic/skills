@@ -48,7 +48,7 @@ Test plan is not needed. Please skip it. For how to capture and upload media, se
 
 ## Screenshots and videos
 
-GitHub has no API for attaching files to a PR body or comment, and `gh` can't do it either. Don't hunt for one. Commit the media to an orphan assets branch in the same repo and reference it by URL. The images then render for anyone who can see the repo, private repos included.
+Upload media with `gh --attach` (gh 2.100+). It works on `gh pr create`, `gh pr edit`, `gh pr comment` and `gh issue comment`, up to 50 files per command, and stores them as GitHub's own `user-attachments`, same as dragging into the web editor. Never commit media to the repo or an assets branch.
 
 ### 1. Capture before and after from the same setup
 
@@ -61,25 +61,9 @@ GitHub has no API for attaching files to a PR body or comment, and `gh` can't do
 - External images that can't load (sandbox, no network) leave empty boxes. Swap them before the screenshot with an `agent-browser eval` that strips `srcset` and sets every `img.src` to an SVG gradient data URI. Put the JS in a file and pass `"$(cat stub.js)"`; inline quoting breaks silently. Say in the comment that images are stand-ins.
 - Read one before and one after image yourself before uploading, to confirm the difference is visible.
 
-### 2. Push to an orphan assets branch, without touching the worktree
+### 2. Upload them into a table
 
-Branch name `pr-assets/<pr-number>`. Build the commit with plumbing and a temporary index, so the checkout and the real index stay untouched:
-
-```sh
-export GIT_INDEX_FILE="$SCRATCH/assets.index"; rm -f "$GIT_INDEX_FILE"
-for f in "$SHOTS"/*.png; do
-  git update-index --add --cacheinfo 100644,"$(git hash-object -w "$f")","$(basename "$f")"
-done
-COMMIT=$(git commit-tree "$(git write-tree)" -m "docs: PR media for #<n> (assets branch, not for merge)")
-unset GIT_INDEX_FILE
-git push origin "$COMMIT:refs/heads/pr-assets/<n>"
-```
-
-A pre-push hook may run the whole lint and test pipeline against the worktree. It's irrelevant to an assets branch but slow, so run the push in the background.
-
-### 3. Reference the files in a table
-
-URL format: `https://github.com/<owner>/<repo>/blob/pr-assets/<n>/<file>.png?raw=true`. Use `<img width="480">` so two columns fit side by side:
+Reference each file as `![alt](./file.png)` in the body, and attach the same paths. gh uploads them and rewrites each reference to its `user-attachments` URL:
 
 ```md
 ### CBB, items theme `none` (the bug)
@@ -87,17 +71,26 @@ Bottom corners were square against the invisible card; now rounded.
 
 | Before | After |
 |---|---|
-| <img src=".../before-cbb-no-item-theme.png?raw=true" width="480"> | <img src=".../after-cbb-no-item-theme.png?raw=true" width="480"> |
+| ![before-cbb-no-item-theme](./before-cbb-no-item-theme.png) | ![after-cbb-no-item-theme](./after-cbb-no-item-theme.png) |
 ```
 
+```sh
+cd "$SHOTS"
+ARGS=(); for f in before-*.png after-*.png; do ARGS+=(--attach "./$f"); done
+gh pr comment <n> --body-file "$BODY" "${ARGS[@]}"
+```
+
+- Only `![alt](./path)` is rewritten. `<img src="./path">` is left as a broken relative path, and the file gets appended at the end of the body instead.
+- Run from the folder holding the files, and write the `--attach` paths exactly as the body spells them (`./name.png`).
+- Attached files the body doesn't reference are appended at the end.
+- `--edit-last` with `--attach` rewrites your last comment in place, which is useful for reshooting.
+- Videos attach the same way and render as a player.
 - One heading and one sentence per scenario saying what to look at.
-- Write the body to a file and use `gh pr comment <n> --body-file` (or `gh pr edit --body-file`). Generate the rows with a small shell function so the URLs can't drift.
-- Videos: GIFs render inline from these URLs, MP4s don't. Convert short clips to GIF, and link the MP4 under it if quality matters.
-- End with a line saying the media lives on `pr-assets/<n>`, not for merge.
+- Check the result: `gh api <comment-url> -q .body | grep -c './'` must print 0.
 
 ### 4. Clean up
 
-Stop the dev server, `agent-browser close`, switch back to the worktree's branch and delete the local `pr-<n>` branch. The harness may rename the worktree branch during a session; if checkout fails, find the current name with `git reflog`.
+Stop the dev server, run `agent-browser close`, switch back to the worktree's branch and delete the local `pr-<n>` branch. The harness may rename the worktree branch during a session; if checkout fails, find the current name with `git reflog`.
 
 ## Tone of voice
 
