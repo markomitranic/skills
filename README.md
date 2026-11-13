@@ -9,7 +9,7 @@ git clone https://github.com/markomitranic/skills.git ~/skills
 ~/skills/install.sh
 ```
 
-`install.sh` symlinks it to `~/.claude/skills`, where Claude Code looks for user-level skills, and to `~/.agents/skills` when Codex is installed.
+`install.sh` symlinks it to `~/.claude/skills`, where Claude Code looks for user-level skills.
 
 ## Other tooling
 
@@ -20,7 +20,3 @@ git clone https://github.com/markomitranic/skills.git ~/skills
     "command": "~/.claude/skills/status-line/statusline.sh"
   }
   ```
-
-### opencode
-
-Skills and `CLAUDE.md` work with no setup. opencode's global search paths already include `~/.claude/skills/<name>/SKILL.md` and it falls back to `~/.claude/CLAUDE.md` for global instructions.
