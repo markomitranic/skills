@@ -86,7 +86,7 @@ gh pr comment <n> --body-file "$BODY" "${ARGS[@]}"
 - `--edit-last` with `--attach` rewrites your last comment in place, which is useful for reshooting.
 - Videos attach the same way and render as a player.
 - One heading and one sentence per scenario saying what to look at.
-- Check the result: `gh api <comment-url> -q .body | grep -c './'` must print 0.
+- Check the result: `gh api <comment-api-path> -q .body | grep -cF '](./'` must print 0.
 
 ### 4. Clean up
 
