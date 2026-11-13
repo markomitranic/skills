@@ -44,7 +44,60 @@ After the opening, expand with a description, which begins non-technical and bec
 
 Attach UI screenshots, videos or images that can help reviewers visualize the changes. This can make it easier for reviewers to grasp the impact of the changes without having to run the code.
 
-Test plan is not needed. Please skip it.
+Test plan is not needed. Please skip it. For how to capture and upload media, see the next chapter.
+
+## Screenshots and videos
+
+GitHub has no API for attaching files to a PR body or comment, and `gh` can't do it either. Don't hunt for one. Commit the media to an orphan assets branch in the same repo and reference it by URL. The images then render for anyone who can see the repo, private repos included.
+
+### 1. Capture before and after from the same setup
+
+- Use `agent-browser` with a named session and a fixed viewport: `agent-browser set viewport 1280 640 2` (2x for crisp images; pick a height that crops empty space).
+- Prefer Storybook's iframe URL. It renders one story without the chrome, and args and globals go in the query string: `iframe.html?id=<story-id>&viewMode=story&globals=theme:CBB&args=theme:pale-orange;itemsTheme:none`. Story ids are listed at `/index.json`.
+- One scenario per variant that matters: the bug, the case the fix must not regress, any case the reviewer must decide on.
+- After: check out the PR head without touching branch names: `git fetch origin pull/<n>/head:pr-<n> && git checkout pr-<n>`.
+- Before: revert only the changed source files with `git checkout main -- <files>` (leave stories alone so the same story ids exist), let HMR rebuild, then rerun the same capture script with a `before` prefix. Restore with `git checkout pr-<n> -- <dir>`.
+- Script the capture loop (open, `wait --load networkidle`, screenshot) so before and after are pixel-comparable.
+- External images that can't load (sandbox, no network) leave empty boxes. Swap them before the screenshot with an `agent-browser eval` that strips `srcset` and sets every `img.src` to an SVG gradient data URI. Put the JS in a file and pass `"$(cat stub.js)"`; inline quoting breaks silently. Say in the comment that images are stand-ins.
+- Read one before and one after image yourself before uploading, to confirm the difference is visible.
+
+### 2. Push to an orphan assets branch, without touching the worktree
+
+Branch name `pr-assets/<pr-number>`. Build the commit with plumbing and a temporary index, so the checkout and the real index stay untouched:
+
+```sh
+export GIT_INDEX_FILE="$SCRATCH/assets.index"; rm -f "$GIT_INDEX_FILE"
+for f in "$SHOTS"/*.png; do
+  git update-index --add --cacheinfo 100644,"$(git hash-object -w "$f")","$(basename "$f")"
+done
+COMMIT=$(git commit-tree "$(git write-tree)" -m "docs: PR media for #<n> (assets branch, not for merge)")
+unset GIT_INDEX_FILE
+git push origin "$COMMIT:refs/heads/pr-assets/<n>"
+```
+
+A pre-push hook may run the whole lint and test pipeline against the worktree. It's irrelevant to an assets branch but slow, so run the push in the background.
+
+### 3. Reference the files in a table
+
+URL format: `https://github.com/<owner>/<repo>/blob/pr-assets/<n>/<file>.png?raw=true`. Use `<img width="480">` so two columns fit side by side:
+
+```md
+### CBB, items theme `none` (the bug)
+Bottom corners were square against the invisible card; now rounded.
+
+| Before | After |
+|---|---|
+| <img src=".../before-cbb-no-item-theme.png?raw=true" width="480"> | <img src=".../after-cbb-no-item-theme.png?raw=true" width="480"> |
+```
+
+- One heading and one sentence per scenario saying what to look at.
+- Write the body to a file and use `gh pr comment <n> --body-file` (or `gh pr edit --body-file`). Generate the rows with a small shell function so the URLs can't drift.
+- Videos: GIFs render inline from these URLs, MP4s don't. Convert short clips to GIF, and link the MP4 under it if quality matters.
+- End with a line saying the media lives on `pr-assets/<n>`, not for merge.
+
+### 4. Clean up
+
+Stop the dev server, `agent-browser close`, switch back to the worktree's branch and delete the local `pr-<n>` branch. The harness may rename the worktree branch during a session; if checkout fails, find the current name with `git reflog`.
 
 ## Tone of voice
 
