@@ -44,53 +44,17 @@ After the opening, expand with a description, which begins non-technical and bec
 
 Attach UI screenshots, videos or images that can help reviewers visualize the changes. This can make it easier for reviewers to grasp the impact of the changes without having to run the code.
 
-Test plan is not needed. Please skip it. For how to capture and upload media, see the next chapter.
+Test plan is not needed. Please skip it.
 
 ## Screenshots and videos
 
-Upload media with `gh --attach` (gh 2.100+). It works on `gh pr create`, `gh pr edit`, `gh pr comment` and `gh issue comment`, up to 50 files per command, and stores them as GitHub's own `user-attachments`, same as dragging into the web editor. Never commit media to the repo or an assets branch.
-
-### 1. Capture before and after from the same setup
-
-- Use `agent-browser` with a named session and a fixed viewport: `agent-browser set viewport 1280 640 2` (2x for crisp images; pick a height that crops empty space).
-- Prefer Storybook's iframe URL. It renders one story without the chrome, and args and globals go in the query string: `iframe.html?id=<story-id>&viewMode=story&globals=theme:CBB&args=theme:pale-orange;itemsTheme:none`. Story ids are listed at `/index.json`.
-- One scenario per variant that matters: the bug, the case the fix must not regress, any case the reviewer must decide on.
-- After: check out the PR head without touching branch names: `git fetch origin pull/<n>/head:pr-<n> && git checkout pr-<n>`.
-- Before: revert only the changed source files with `git checkout main -- <files>` (leave stories alone so the same story ids exist), let HMR rebuild, then rerun the same capture script with a `before` prefix. Restore with `git checkout pr-<n> -- <dir>`.
-- Script the capture loop (open, `wait --load networkidle`, screenshot) so before and after are pixel-comparable.
-- External images that can't load (sandbox, no network) leave empty boxes. Swap them before the screenshot with an `agent-browser eval` that strips `srcset` and sets every `img.src` to an SVG gradient data URI. Put the JS in a file and pass `"$(cat stub.js)"`; inline quoting breaks silently. Say in the comment that images are stand-ins.
-- Read one before and one after image yourself before uploading, to confirm the difference is visible.
-
-### 2. Upload them into a table
-
-Reference each file as `![alt](./file.png)` in the body, and attach the same paths. gh uploads them and rewrites each reference to its `user-attachments` URL:
-
-```md
-### CBB, items theme `none` (the bug)
-Bottom corners were square against the invisible card; now rounded.
-
-| Before | After |
-|---|---|
-| ![before-cbb-no-item-theme](./before-cbb-no-item-theme.png) | ![after-cbb-no-item-theme](./after-cbb-no-item-theme.png) |
-```
+Upload with `--attach` on `gh pr create|edit|comment`, never via a repo branch. Write each file as `![alt](./file.png)` (an `<img src>` is not rewritten), and run from the files' folder:
 
 ```sh
-cd "$SHOTS"
-ARGS=(); for f in before-*.png after-*.png; do ARGS+=(--attach "./$f"); done
-gh pr comment <n> --body-file "$BODY" "${ARGS[@]}"
+gh pr comment <n> --body-file body.md --attach ./before.png --attach ./after.png
 ```
 
-- Only `![alt](./path)` is rewritten. `<img src="./path">` is left as a broken relative path, and the file gets appended at the end of the body instead.
-- Run from the folder holding the files, and write the `--attach` paths exactly as the body spells them (`./name.png`).
-- Attached files the body doesn't reference are appended at the end.
-- `--edit-last` with `--attach` rewrites your last comment in place, which is useful for reshooting.
-- Videos attach the same way and render as a player.
-- One heading and one sentence per scenario saying what to look at.
-- Check the result: `gh api <comment-api-path> -q .body | grep -cF '](./'` must print 0.
-
-### 4. Clean up
-
-Stop the dev server, run `agent-browser close`, switch back to the worktree's branch and delete the local `pr-<n>` branch. The harness may rename the worktree branch during a session; if checkout fails, find the current name with `git reflog`.
+Before/after go in a `| Before | After |` table, one row per scenario.
 
 ## Tone of voice
 
