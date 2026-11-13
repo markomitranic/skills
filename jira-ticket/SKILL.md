@@ -6,24 +6,26 @@ argument-hint: "What is the ticket about?"
 
 # Jira ticket writing
 
-Summarize all the information, context, and decisions, so that developers can easily catch up and clearly understand what they need to do. Make sure to include all the information and not lose information or context.
+Summarize all the information, context, and decisions, so that developers can easily catch up and clearly understand what they need to do.
 
-IMPORTANT: A ticket is not a spec. Ticket tells a story of what needs to be done and why, but it should NOT INCLUDE technical details, except when giving
-hints to the developer about where to look for more information. Nobody likes a wall of text and technical jargon. The ticket should be concise and
-focused on the outcome, not the implementation. It should be easy to read by PMs, QAs, designers, and developers alike. A good ticket explains WHAT, not HOW it's done.
+- A ticket is not a spec. Focus on intent and requirement.
+- Ticket tells a story of what needs to be done and why, but it should not include technical details.
+- Nobody likes a wall of text and technical jargon.
+- The ticket should be concise and focused on the outcome, not the implementation.
+- It should be easy to read by PMs, QAs, designers, and developers alike. A good ticket explains WHAT, not HOW it's done.
 
-## Workflow
+## Planning
 
-When the user dumps raw context (a transcript, a meeting note, a Slack thread, a spec) or the prior part of the current conversation, use the project manager personality to deeply understand the request:
+When the user dumps raw context (a transcript, a meeting note, a Slack thread, a spec) or the prior part of the current conversation, use your project manager persona to deeply understand the request:
 
 1. Research dependencies and understand the request:
    - The core objective (what is being built/fixed/changed)
    - Explicit requirements vs. implied requirements
    - Technical constraints and dependencies
    - Stakeholders or teams impacted
-2. Initiate a team of agents to perform deeper research/planning, analyse their responses, and synthesize the information:
-   - Sub-agent to look up relevant Confluence pages or Jira tickets that duplicate or relate to the request.
-   - Sub-agent to access the codebase or documentation to understand technical constraints or terms.
+2. Perform deeper research/planning if needed, for example:
+   - Look up relevant Confluence pages or Jira tickets that duplicate or relate to the request.
+   - Access the codebase or documentation to understand technical constraints or terms.
    - When results are in, analyse the problem from multiple angles and identify **information gaps** that would result in vague or incomplete ticket
 3. Ask the user clarifying questions until all gaps are filled and decisions are made. Use `AskUserQuestion` tool.
    - Correct technical wording (double check the verbs and technical terms)
@@ -33,22 +35,16 @@ When the user dumps raw context (a transcript, a meeting note, a Slack thread, a
    - Unstated integration points (which services does this touch?)
    - Edge cases not covered (error handling, empty states, concurrent access)
 4. Print the ticket(s) on screen for the user to review and copy-paste into Jira.
-5. Offer some ideas for assets/images/screenshots they could attach to the ticket.
 
-### Interview (step 3)
-
-Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
-
-Ask the questions one at a time.
-
-Never leave any unanswered questions - if there are unanswered questions, repeat the interview process until all questions are answered! An incomplete ticket is worse than no ticket at all, because it creates false confidence and leads to wasted time and rework.
+Never leave any unanswered questions - if there are unanswered questions, repeat the interview process until all questions are answered!
 
 ## Structure
 
-Every ticket has exactly three sections, in this order:
+Every ticket has exactly three sections, separated with dividers, in this order:
 
-1. **Why** — 2 sentences in a "note" block. Paint a picture of the scenario/goal of the ticket. Avoid generic value props and marketing language. Be specific.
-2. **Description** — succinct and information dense, in multiple short chapters/paragraphs, using technical language. If there are any relevant Confluence documents, Figma designs, URLs of note or Jira ticket references, include them in the description. All links and jira ticket refs should be clickable. Attach an ASCII diagram if it helps clarify the structure of a system or flow.
+1. Short sentences to explain the situation. Maximum 200 characters Avoid generic value props and marketing language. Explain the problem from the outside, with specific and concise language, grounded in terms that normies will understand.  
+   Example: "Retail agents can create 5G orders and send a payment link via SMS. The payment steps our website gets from the API sometimes come in a failed state. We should display a friendly error."
+2. Description, using technical language. Maximum 1000 characters. Use clever formatting, tables, chapters, to visually break it up for ease of reading. If there are any relevant Confluence documents, Figma designs, URLs of note or Jira ticket references, include them in the description. All links and jira ticket refs should be clickable. Attach an ASCII diagram if it helps clarify the structure of a system or flow.
 3. **Acceptance criteria** — a testable list. Each item is something a human or test could verify.
    - A flat list without emoji
    - Each item starts with the system or actor: "The CMS field exists...", "The endpoint accepts...", "The frontend renders..."

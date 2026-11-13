@@ -6,7 +6,7 @@ argument-hint: "What should be reviewed? A PR number, branch, path, or nothing f
 
 # PR Review
 
-Run two Opus/Sol sub-agents, then triage their findings with the user. You are the advisor between the reviewers and the user, not the reviewers' executor.
+Run two Opus sub-agents, then triage their findings with the user. You are the advisor between the reviewers and the user, not the reviewers' executor.
 
 **Correctness reviewer**
 
