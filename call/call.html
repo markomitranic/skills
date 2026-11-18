@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Claude is calling</title>
+<style>
+  :root {
+    --bg: #0b0b0c;
+    --fg: #f4f2ee;
+    --muted: #9a968f;
+    --faint: #2a2927;
+    --orb-a: #f0b48a;
+    --orb-b: #c8693f;
+    --accept: #2fbf71;
+    --decline: #eb4b3f;
+    --button: #1f1e1c;
+    --button-active: #f4f2ee;
+    --warning: #f2c14e;
+  }
+
+  * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  main {
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    padding: calc(env(safe-area-inset-top) + 40px) 24px calc(env(safe-area-inset-bottom) + 28px);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  header { text-align: center; }
+  h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
+  .meta { margin-top: 6px; color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .meta span + span::before { content: "·"; margin: 0 8px; }
+
+  .stage { display: grid; place-items: center; align-content: center; gap: 28px; }
+
+  .orb-wrap {
+    position: relative;
+    width: 168px;
+    height: 168px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .orb {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--orb-a), var(--orb-b) 70%);
+    box-shadow: 0 0 60px rgba(200, 105, 63, 0.28);
+    transform: scale(var(--level, 1));
+    transition: transform 90ms linear, filter 300ms ease, opacity 300ms ease;
+  }
+
+  .ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--orb-a);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .spinner {
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: var(--orb-a);
+    border-right-color: rgba(240, 180, 138, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 250ms ease;
+  }
+
+  [data-screen="incoming"] .ring { animation: ripple 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite; }
+  [data-screen="incoming"] .ring:nth-child(2) { animation-delay: 0.8s; }
+  [data-screen="incoming"] .ring:nth-child(3) { animation-delay: 1.6s; }
+  [data-screen="incoming"] .orb { animation: breathe 2.4s ease-in-out infinite; }
+
+  [data-mode="listening"] .orb { animation: breathe 4s ease-in-out infinite; }
+  [data-mode="working"] .spinner { opacity: 1; animation: spin 1.1s linear infinite; }
+  [data-mode="working"] .orb { opacity: 0.85; }
+  [data-mode="muted"] .orb { filter: grayscale(1) brightness(0.55); }
+  [data-screen="connecting"] .orb, [data-screen="ended"] .orb { filter: grayscale(0.6) brightness(0.6); }
+
+  @keyframes ripple {
+    0% { transform: scale(1); opacity: 0.55; }
+    100% { transform: scale(1.75); opacity: 0; }
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.035); }
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status {
+    min-height: 24px;
+    font-size: 17px;
+    font-weight: 500;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .status[data-tone="warning"] { color: var(--warning); }
+  .status[data-tone="problem"] { color: var(--decline); }
+
+  .captions {
+    min-height: 132px;
+    display: grid;
+    align-content: end;
+    gap: 10px;
+    padding-bottom: 28px;
+    text-align: center;
+  }
+
+  .captions p {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: opacity 300ms ease;
+  }
+
+  #you { color: var(--muted); font-size: 15px; -webkit-line-clamp: 2; }
+  #claude { font-size: 18px; -webkit-line-clamp: 4; }
+  .captions p:empty { opacity: 0; }
+
+  .controls { display: flex; justify-content: center; gap: 56px; }
+  .control { display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+
+  button {
+    width: 72px;
+    height: 72px;
+    border: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--fg);
+    background: var(--button);
+    cursor: pointer;
+    transition: transform 120ms ease, background 200ms ease, color 200ms ease;
+  }
+
+  button:active { transform: scale(0.93); }
+  button svg { width: 30px; height: 30px; }
+  button.accept { background: var(--accept); }
+  button.decline, button.hangup { background: var(--decline); }
+  button.toggled { background: var(--button-active); color: var(--bg); }
+  button:disabled { opacity: 0.4; }
+
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+</head>
+<body>
+<main id="app" data-screen="incoming" data-mode="idle">
+  <header>
+    <h1>Claude</h1>
+    <p class="meta"><span id="title">T3 Code</span><span id="clock">calling…</span></p>
+  </header>
+
+  <section class="stage">
+    <div class="orb-wrap" id="orb">
+      <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+      <div class="spinner"></div>
+      <div class="orb"></div>
+    </div>
+    <p class="status" id="status"></p>
+  </section>
+
+  <section class="captions" aria-live="polite">
+    <p id="you"></p>
+    <p id="claude"></p>
+  </section>
+
+  <nav class="controls" id="incoming-controls">
+    <div class="control">
+      <button class="decline" id="decline" aria-label="Decline">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 0 1 0-1.36C3.34 8.83 7.46 7 12 7s8.66 1.83 11.71 4.72c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 0 0-2.67-1.85.996.996 0 0 1-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+      </button>
+      Decline
+    </div>
+    <div class="control">
+      <button class="accept" id="answer" aria-label="Answer">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      </button>
+      Answer
+    </div>
+  </nav>
+
+  <nav class="controls" id="live-controls" hidden>
+    <div class="control">
+      <button id="mute" aria-label="Mute">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+      </button>
+      <span id="mute-label">Mute</span>
+    </div>
+    <div class="control">
+      <button class="hangup" id="hangup" aria-label="End call">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 0 1 0-1.36C3.34 8.83 7.46 7 12 7s8.66 1.83 11.71 4.72c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 0 0-2.67-1.85.996.996 0 0 1-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+      </button>
+      End
+    </div>
+  </nav>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.31/dist/bundle.min.js"></script>
+<script>
+const ORT_BASE = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/"
+const VAD_BASE = "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.31/dist/"
+const token = new URLSearchParams(location.search).get("t") ?? ""
+const $ = (id) => document.getElementById(id)
+
+const state = {
+  screen: "incoming",
+  phase: "listening",
+  talking: false,
+  playing: false,
+  muted: false,
+  online: false,
+  startedAt: 0,
+  notice: null,
+}
+
+let audio = null
+let analyser = null
+let vad = null
+let socket = null
+let wakeLock = null
+let queue = []
+let current = null
+let pulseTimer = null
+let retry = 0
+let noiseFloor = 0.004
+let micOn = false
+
+const NEAR_SPEECH = 0.01
+
+const mode = () => {
+  if (state.screen !== "live") return "idle"
+  if (state.muted) return "muted"
+  if (state.playing) return "speaking"
+  if (state.talking) return "talking"
+  if (state.phase === "working") return "working"
+  return "listening"
+}
+
+const statusText = {
+  idle: "",
+  muted: "Muted",
+  speaking: "Tap to skip",
+  talking: "Listening…",
+  working: "Claude is working",
+  listening: "Go ahead, I'm listening",
+}
+
+function render() {
+  const app = $("app")
+  app.dataset.screen = state.screen
+  app.dataset.mode = mode()
+
+  $("incoming-controls").hidden = state.screen !== "incoming"
+  $("live-controls").hidden = state.screen === "incoming"
+  $("mute").classList.toggle("toggled", state.muted)
+  $("mute-label").textContent = state.muted ? "Unmute" : "Mute"
+  $("mute").disabled = $("hangup").disabled = state.screen !== "live"
+
+  const status = $("status")
+  const offline = state.screen === "live" && !state.online
+  status.dataset.tone = state.notice?.tone ?? ""
+  status.textContent = state.notice?.text
+    ?? (offline ? "Reconnecting…" : null)
+    ?? (state.screen === "connecting" ? "Connecting…" : statusText[mode()])
+
+  syncPulse()
+  syncMic()
+}
+
+function yourTurn() {
+  return state.screen === "live" && state.online && !state.muted && !state.playing && state.phase === "listening"
+}
+
+function syncMic() {
+  if (!vad || micOn === yourTurn()) return
+  micOn = yourTurn()
+  if (micOn) return vad.start()
+  vad.pause()
+  state.talking = false
+}
+
+function rms(samples) {
+  let sum = 0
+  for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i]
+  return Math.sqrt(sum / samples.length)
+}
+
+function loudness(samples) {
+  const windows = []
+  for (let i = 0; i + 512 <= samples.length; i += 512) windows.push(rms(samples.subarray(i, i + 512)))
+  windows.sort((a, b) => b - a)
+  return windows[Math.floor(windows.length * 0.2)] ?? 0
+}
+
+function notice(text, tone = "", ms = 5000) {
+  state.notice = { text, tone }
+  render()
+  clearTimeout(notice.timer)
+  notice.timer = setTimeout(() => { state.notice = null; render() }, ms)
+}
+
+function tickClock() {
+  if (state.screen !== "live") return
+  const seconds = Math.floor((Date.now() - state.startedAt) / 1000)
+  $("clock").textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+}
+
+setInterval(tickClock, 1000)
+
+function tone(frequency, at, duration, gain = 0.07, type = "sine") {
+  if (!audio) return
+  const start = audio.currentTime + at
+  const oscillator = audio.createOscillator()
+  const envelope = audio.createGain()
+  oscillator.type = type
+  oscillator.frequency.value = frequency
+  envelope.gain.setValueAtTime(0, start)
+  envelope.gain.linearRampToValueAtTime(gain, start + 0.012)
+  envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+  oscillator.connect(envelope).connect(audio.destination)
+  oscillator.start(start)
+  oscillator.stop(start + duration + 0.02)
+}
+
+const sounds = {
+  connect: () => { tone(523, 0, 0.1); tone(659, 0.1, 0.1); tone(784, 0.2, 0.16) },
+  sent: () => { tone(660, 0, 0.07, 0.06); tone(990, 0.08, 0.1, 0.06) },
+  pulse: () => tone(587, 0, 0.16, 0.025),
+  chime: () => { tone(784, 0, 0.12, 0.05); tone(1047, 0.1, 0.2, 0.05) },
+  problem: () => { tone(247, 0, 0.18, 0.07, "triangle"); tone(196, 0.2, 0.26, 0.07, "triangle") },
+  warning: () => { tone(440, 0, 0.2, 0.05); tone(440, 0.3, 0.2, 0.05) },
+  end: () => { tone(494, 0, 0.14, 0.06); tone(392, 0.16, 0.24, 0.06) },
+}
+
+function syncPulse() {
+  const waiting = mode() === "working"
+  if (waiting && !pulseTimer) pulseTimer = setInterval(sounds.pulse, 2200)
+  if (!waiting && pulseTimer) { clearInterval(pulseTimer); pulseTimer = null }
+}
+
+function setLevel(value) {
+  document.querySelector(".orb").style.setProperty("--level", value.toFixed(3))
+}
+
+function followPlayback() {
+  if (!state.playing || !analyser) return setLevel(1)
+  const samples = new Uint8Array(analyser.fftSize)
+  analyser.getByteTimeDomainData(samples)
+  const peak = samples.reduce((max, sample) => Math.max(max, Math.abs(sample - 128)), 0) / 128
+  setLevel(1 + Math.min(peak, 1) * 0.14)
+  requestAnimationFrame(followPlayback)
+}
+
+async function playNext() {
+  if (current || !queue.length) return
+
+  const next = queue.shift()
+  state.playing = true
+  render()
+  send({ type: "playing" })
+  $("claude").textContent = next.caption
+
+  try {
+    const response = await fetch(next.audio)
+    const buffer = await audio.decodeAudioData(await response.arrayBuffer())
+    sounds.chime()
+    current = audio.createBufferSource()
+    current.buffer = buffer
+    current.connect(analyser)
+    current.onended = finishPlayback
+    current.start(audio.currentTime + 0.3)
+    requestAnimationFrame(followPlayback)
+  } catch (error) {
+    current = null
+    notice("Couldn't play that reply. It's in T3.", "problem")
+    sounds.problem()
+    finishPlayback()
+  }
+}
+
+function finishPlayback() {
+  current = null
+  if (queue.length) return playNext()
+
+  state.playing = false
+  setLevel(1)
+  send({ type: "played" })
+  render()
+}
+
+function skip() {
+  if (!state.playing) return
+  queue = []
+  if (current) { current.onended = null; current.stop(); current = null }
+  finishPlayback()
+}
+
+function toPcm16(samples) {
+  const pcm = new Int16Array(samples.length)
+  for (let i = 0; i < samples.length; i++) {
+    const clamped = Math.max(-1, Math.min(1, samples[i]))
+    pcm[i] = clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff
+  }
+  return pcm.buffer
+}
+
+async function startListening() {
+  vad = await window.vad.MicVAD.new({
+    model: "v5",
+    audioContext: audio,
+    baseAssetPath: VAD_BASE,
+    onnxWASMBasePath: ORT_BASE,
+    positiveSpeechThreshold: 0.6,
+    negativeSpeechThreshold: 0.4,
+    redemptionMs: 1200,
+    preSpeechPadMs: 300,
+    minSpeechMs: 450,
+    getStream: () => navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: false },
+    }),
+    pauseStream: async () => {},
+    resumeStream: async (stream) => stream,
+    onSpeechStart: () => { state.talking = true; send({ type: "speaking" }); render() },
+    onVADMisfire: () => { state.talking = false; setLevel(1); send({ type: "quiet" }); render() },
+    onFrameProcessed: ({ isSpeech }, frame) => {
+      if (isSpeech < 0.3) noiseFloor = noiseFloor * 0.95 + rms(frame) * 0.05
+      if (state.talking) setLevel(1 + isSpeech * 0.08)
+    },
+    onSpeechEnd: (samples) => {
+      state.talking = false
+      setLevel(1)
+      const level = loudness(samples)
+      if (level < Math.max(NEAR_SPEECH, noiseFloor * 3)) {
+        send({ type: "ignored", level, floor: noiseFloor })
+        return render()
+      }
+      send({ type: "level", level, floor: noiseFloor })
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        notice("Not connected, that one didn't go through.", "problem")
+        return render()
+      }
+      socket.send(toPcm16(samples))
+      state.phase = "working"
+      sounds.sent()
+      render()
+    },
+  })
+}
+
+function send(event) {
+  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(event))
+}
+
+function connect() {
+  const scheme = location.protocol === "https:" ? "wss" : "ws"
+  socket = new WebSocket(`${scheme}://${location.host}/ws?t=${encodeURIComponent(token)}`)
+  socket.binaryType = "arraybuffer"
+
+  socket.onopen = () => {
+    retry = 0
+    state.online = true
+    if (state.playing) send({ type: "playing" })
+    render()
+  }
+
+  socket.onmessage = ({ data }) => handle(JSON.parse(data))
+
+  socket.onclose = () => {
+    state.online = false
+    if (state.screen !== "live") return
+    render()
+    setTimeout(connect, Math.min(5000, 500 * 2 ** retry++))
+  }
+}
+
+function handle(event) {
+  switch (event.type) {
+    case "hello":
+      if (event.title) $("title").textContent = event.title
+      break
+    case "phase":
+      state.phase = event.phase
+      break
+    case "heard":
+      $("you").textContent = event.text
+      $("claude").textContent = ""
+      break
+    case "dropped":
+      break
+    case "reply":
+      queue.push(event)
+      playNext()
+      break
+    case "warning":
+      notice(event.message, "warning", 8000)
+      sounds.warning()
+      break
+    case "problem":
+      notice(event.message, "problem", 8000)
+      sounds.problem()
+      break
+    case "ended":
+      return finish(event.reason)
+  }
+  render()
+}
+
+async function keepAwake() {
+  try { wakeLock = await navigator.wakeLock?.request("screen") } catch {}
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && state.screen === "live") keepAwake()
+})
+
+async function answer() {
+  state.screen = "connecting"
+  render()
+
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = "play-and-record"
+    audio = new AudioContext()
+    await audio.resume()
+    analyser = audio.createAnalyser()
+    analyser.fftSize = 512
+    analyser.connect(audio.destination)
+    await startListening()
+  } catch (error) {
+    state.screen = "incoming"
+    const blocked = error?.name === "NotAllowedError"
+    notice(blocked ? "Microphone is blocked. Allow it for this site and try again." : `Couldn't start: ${error.message ?? error}`, "problem", 10000)
+    return
+  }
+
+  state.screen = "live"
+  state.startedAt = Date.now()
+  tickClock()
+  sounds.connect()
+  keepAwake()
+  connect()
+  render()
+}
+
+function finish(reason) {
+  if (state.screen === "ended") return
+  const wasLive = state.screen === "live"
+  state.screen = "ended"
+  state.notice = null
+  queue = []
+  if (current) { current.onended = null; current.stop(); current = null }
+  state.playing = state.talking = false
+  vad?.destroy()
+  wakeLock?.release?.()
+  if (wasLive) sounds.end()
+  $("clock").textContent = "call ended"
+  $("status").textContent = reason ?? "Call ended"
+  $("live-controls").hidden = true
+  $("incoming-controls").hidden = true
+  $("app").dataset.screen = "ended"
+  $("app").dataset.mode = "idle"
+  syncPulse()
+  socket?.close()
+}
+
+function hangup() {
+  send({ type: "hangup" })
+  finish("You hung up")
+}
+
+async function decline() {
+  await fetch(`/hangup?t=${encodeURIComponent(token)}`, { method: "POST" }).catch(() => {})
+  finish("Declined")
+}
+
+function toggleMute() {
+  state.muted = !state.muted
+  if (state.muted) send({ type: "quiet" })
+  render()
+}
+
+$("answer").onclick = answer
+$("decline").onclick = decline
+$("hangup").onclick = hangup
+$("mute").onclick = toggleMute
+$("orb").onclick = skip
+render()
+</script>
+</body>
+</html>
