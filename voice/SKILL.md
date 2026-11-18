@@ -1,6 +1,6 @@
 ---
 name: voice
-description: Always on. Attach a voice note to every final reply to the user. Skip it when the user has turned voice off, or when your reply goes to another agent.
+description: Use when the user asks you to answer with voice messages, or invokes /voice. Keep answering with voice for as long as the conversation is active.
 ---
 
 # Voice
