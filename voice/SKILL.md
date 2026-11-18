@@ -20,7 +20,8 @@ prints the MP3 path:
 EOF
 ```
 
-Start the final reply with the embed, then a blank line, then the written reply:
+End the final reply with the embed, after a blank line, so the player sits right where the user
+stops reading:
 
 ```markdown
 ![Listen](<mp3 path>)
