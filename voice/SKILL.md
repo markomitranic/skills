@@ -10,9 +10,9 @@ wants to listen to verbose ones, so the voice note is a significantly shorter, s
 version of the reply. A speech engine reads it literally. The written reply stays as it would be
 without this skill.
 
-Generate the audio with the local Kokoro voice. The script needs `uv` and `ffmpeg` on the PATH,
-installs its own Python packages, and downloads the voice model (about 350 MB) on first run. It
-prints the MP3 path:
+Generate the audio with the local Pocket TTS voice. The script needs `uv` and `ffmpeg` on the PATH,
+installs its own Python packages (about 1 GB, CPU-only PyTorch), and downloads the voice model on
+first run. It prints the MP3 path:
 
 ```bash
 ~/.claude/skills/voice/speak.py <<'EOF'
