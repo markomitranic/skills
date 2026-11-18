@@ -4,4 +4,4 @@
 *.swp
 *.swo
 synced
-.trash
+.trash__pycache__
