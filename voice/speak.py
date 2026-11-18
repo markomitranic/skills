@@ -5,6 +5,8 @@
 # ///
 """Turn a spoken script from stdin into an MP3 with the local Kokoro voice, and print its path.
 
+The script text is saved next to the MP3 with a .txt suffix, for captions.
+
 Model files download once into the user cache. Replies go to the system temp folder, which the OS
 clears on its own.
 
@@ -95,6 +97,7 @@ def main() -> None:
     samples, rate = synthesize(text, args.voice, args.speed)
     target = reply_path()
     encode_mp3(samples, rate, target)
+    target.with_suffix(".txt").write_text(text)
 
     print(target)
     print(
