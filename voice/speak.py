@@ -5,27 +5,26 @@
 # ///
 """Turn a spoken script from stdin into an MP3 with the local Kokoro voice, and print its path.
 
-Model files download on first use. Replies older than two weeks are pruned on every run.
+Model files download once into the user cache. Replies go to the system temp folder, which the OS
+clears on its own.
 
-@example echo "Done, the tests pass." | speak.py  # /home/me/.cache/claude-voice/replies/2026-11-18-184501-3fa2.mp3
+@example echo "Done, the tests pass." | speak.py  # /tmp/claude-voice/2026-11-18-184501-3fa2.mp3
 """
 
 import argparse
 import secrets
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
 
-CACHE = Path.home() / ".cache" / "claude-voice"
-MODELS = CACHE / "models"
-REPLIES = CACHE / "replies"
+MODELS = Path.home() / ".cache" / "claude-voice" / "models"
+REPLIES = Path(tempfile.gettempdir()) / "claude-voice"
 
 MODEL_RELEASE = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
 MODEL_FILES = ["kokoro-v1.0.onnx", "voices-v1.0.bin"]
-
-REPLY_TTL = 14 * 86400
 
 
 def ensure_models() -> None:
@@ -41,15 +40,6 @@ def ensure_models() -> None:
         partial = target.with_suffix(".part")
         urllib.request.urlretrieve(f"{MODEL_RELEASE}/{name}", partial)
         partial.rename(target)
-
-
-def prune_replies() -> None:
-    """Delete reply audio older than the retention window."""
-    cutoff = time.time() - REPLY_TTL
-
-    for old in REPLIES.glob("*.mp3"):
-        if old.stat().st_mtime < cutoff:
-            old.unlink()
 
 
 def synthesize(text: str, voice: str, speed: float):
@@ -81,7 +71,7 @@ def encode_mp3(samples, rate: int, target: Path) -> None:
 def reply_path() -> Path:
     """Fresh, sortable file name for one reply.
 
-    @example reply_path()  # .../replies/2026-11-18-184501-3fa2.mp3
+    @example reply_path()  # /tmp/claude-voice/2026-11-18-184501-3fa2.mp3
     """
     stamp = time.strftime("%Y-%m-%d-%H%M%S")
 
@@ -101,7 +91,6 @@ def main() -> None:
     started = time.time()
     ensure_models()
     REPLIES.mkdir(parents=True, exist_ok=True)
-    prune_replies()
 
     samples, rate = synthesize(text, args.voice, args.speed)
     target = reply_path()
