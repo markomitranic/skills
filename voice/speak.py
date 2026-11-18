@@ -3,71 +3,120 @@
 # requires-python = ">=3.11"
 # dependencies = ["kokoro-onnx>=0.4"]
 # ///
-"""Turn a spoken script from stdin into an MP3 with the local Kokoro voice, and print its path.
+"""Turn a spoken script from stdin into an MP3 and print its path.
 
-The script text is saved next to the MP3 with a .txt suffix, for captions.
-
-Model files download once into the user cache. Replies go to the system temp folder, which the OS
+Speaks with ElevenLabs when an API key is set, and falls back to the local Kokoro voice when there
+is no key or ElevenLabs fails, for example when the credits run out. The script text is saved next
+to the MP3 with a .txt suffix, for captions. Replies go to the system temp folder, which the OS
 clears on its own.
 
 @example echo "Done, the tests pass." | speak.py  # /tmp/claude-voice/2026-11-18-184501-3fa2.mp3
 """
 
-import argparse
+import json
+import os
 import secrets
 import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
-MODELS = Path.home() / ".cache" / "claude-voice" / "models"
 REPLIES = Path(tempfile.gettempdir()) / "claude-voice"
 
-MODEL_RELEASE = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
-MODEL_FILES = ["kokoro-v1.0.onnx", "voices-v1.0.bin"]
+ELEVENLABS_KEY_FILE = Path.home() / ".config" / "claude-voice" / "elevenlabs-key"
+ELEVENLABS_VOICE = "cjVigY5qzO86Huf0OWal"
+ELEVENLABS_MODEL = "eleven_flash_v2_5"
+ELEVENLABS_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice}?output_format=mp3_44100_128"
+
+KOKORO_MODELS = Path.home() / ".cache" / "claude-voice" / "models"
+KOKORO_RELEASE = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
+KOKORO_FILES = ["kokoro-v1.0.onnx", "voices-v1.0.bin"]
+KOKORO_VOICE = "am_michael"
 
 
-def ensure_models() -> None:
+def elevenlabs_key() -> str | None:
+    """The ElevenLabs API key from ELEVENLABS_API_KEY or the key file, if either is set."""
+    if os.environ.get("ELEVENLABS_API_KEY"):
+        return os.environ["ELEVENLABS_API_KEY"]
+
+    if ELEVENLABS_KEY_FILE.exists():
+        return ELEVENLABS_KEY_FILE.read_text().strip() or None
+
+    return None
+
+
+def elevenlabs(text: str, key: str) -> bytes:
+    """Speak text with ElevenLabs and return the MP3 bytes.
+
+    @example elevenlabs("Hi there.", key)  # b"ID3…"
+    """
+    request = urllib.request.Request(
+        ELEVENLABS_URL.format(voice=ELEVENLABS_VOICE),
+        data=json.dumps({"text": text, "model_id": ELEVENLABS_MODEL}).encode(),
+        headers={"xi-api-key": key, "Content-Type": "application/json"},
+    )
+
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return response.read()
+
+
+def ensure_kokoro() -> None:
     """Download the Kokoro model and voice pack once, about 350 MB."""
-    MODELS.mkdir(parents=True, exist_ok=True)
+    KOKORO_MODELS.mkdir(parents=True, exist_ok=True)
 
-    for name in MODEL_FILES:
-        target = MODELS / name
+    for name in KOKORO_FILES:
+        target = KOKORO_MODELS / name
         if target.exists():
             continue
 
         print(f"voice: downloading {name}", file=sys.stderr)
         partial = target.with_suffix(".part")
-        urllib.request.urlretrieve(f"{MODEL_RELEASE}/{name}", partial)
+        urllib.request.urlretrieve(f"{KOKORO_RELEASE}/{name}", partial)
         partial.rename(target)
 
 
-def synthesize(text: str, voice: str, speed: float):
-    """Render text to float32 samples with Kokoro.
+def kokoro(text: str) -> bytes:
+    """Speak text with the local Kokoro model and return MP3 bytes, encoded by ffmpeg.
 
-    @example synthesize("Hi there.", "af_heart", 1.0)  # (array([...]), 24000)
+    @example kokoro("Hi there.")  # b"ID3…"
     """
     from kokoro_onnx import Kokoro
 
-    kokoro = Kokoro(str(MODELS / MODEL_FILES[0]), str(MODELS / MODEL_FILES[1]))
-    lang = "en-gb" if voice.startswith("b") else "en-us"
+    ensure_kokoro()
+    model = Kokoro(str(KOKORO_MODELS / KOKORO_FILES[0]), str(KOKORO_MODELS / KOKORO_FILES[1]))
+    samples, rate = model.create(text, voice=KOKORO_VOICE, lang="en-us")
 
-    return kokoro.create(text, voice=voice, speed=speed, lang=lang)
-
-
-def encode_mp3(samples, rate: int, target: Path) -> None:
-    """Pipe raw float32 samples through ffmpeg into a compact mono MP3."""
-    subprocess.run(
+    return subprocess.run(
         [
-            "ffmpeg", "-loglevel", "error", "-y",
+            "ffmpeg", "-loglevel", "error",
             "-f", "f32le", "-ar", str(rate), "-ac", "1", "-i", "pipe:0",
-            "-b:a", "64k", str(target),
+            "-b:a", "64k", "-f", "mp3", "pipe:1",
         ],
         input=samples.astype("float32").tobytes(),
+        capture_output=True,
         check=True,
-    )
+    ).stdout
+
+
+def speak(text: str) -> tuple[bytes, str]:
+    """Speak text with ElevenLabs if possible, otherwise Kokoro, and name the engine used.
+
+    @example speak("Hi there.")  # (b"ID3…", "elevenlabs")
+    """
+    key = elevenlabs_key()
+    if key is None:
+        return kokoro(text), "kokoro"
+
+    try:
+        return elevenlabs(text, key), "elevenlabs"
+    except (urllib.error.URLError, TimeoutError) as error:
+        detail = error.read().decode()[:200] if isinstance(error, urllib.error.HTTPError) else error
+        print(f"voice: ElevenLabs failed ({detail}), using Kokoro", file=sys.stderr)
+
+        return kokoro(text), "kokoro"
 
 
 def reply_path() -> Path:
@@ -81,29 +130,20 @@ def reply_path() -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--voice", default="af_heart")
-    parser.add_argument("--speed", type=float, default=1.0)
-    args = parser.parse_args()
-
     text = sys.stdin.read().strip()
     if not text:
         sys.exit("voice: nothing to say")
 
     started = time.time()
-    ensure_models()
-    REPLIES.mkdir(parents=True, exist_ok=True)
+    audio, engine = speak(text)
 
-    samples, rate = synthesize(text, args.voice, args.speed)
+    REPLIES.mkdir(parents=True, exist_ok=True)
     target = reply_path()
-    encode_mp3(samples, rate, target)
+    target.write_bytes(audio)
     target.with_suffix(".txt").write_text(text)
 
     print(target)
-    print(
-        f"voice: {args.voice}, {len(samples) / rate:.0f}s of audio in {time.time() - started:.1f}s",
-        file=sys.stderr,
-    )
+    print(f"voice: {engine}, {len(text)} characters in {time.time() - started:.1f}s", file=sys.stderr)
 
 
 if __name__ == "__main__":
