@@ -50,6 +50,7 @@ class Call:
     t3_pid: int
     thread: str
     title: str
+    link: str
     token: str
     whisper: asyncio.Task
     started: float = field(default_factory=time.monotonic)
@@ -120,16 +121,16 @@ async def run_t3(call_t3: str, *args: str, stdin: str = "") -> tuple[int, str, s
     return process.returncode, out.decode(), err.decode().strip()
 
 
-async def thread_title(t3: str, thread: str) -> str:
-    """Title of a thread, or an empty string when T3 can't say.
+async def thread_info(t3: str, thread: str) -> dict:
+    """The thread as T3 describes it, including its title and app link, or {} when T3 can't say.
 
-    @example await thread_title(t3, thread)  # "Checkout headers"
+    @example (await thread_info(t3, thread)).get("link")  # "https://app.t3.codes/threads/…/…"
     """
-    code, out, _ = await run_t3(t3, "thread", "show", thread, "--messages", "1", "--json")
+    code, out, _ = await run_t3(t3, "thread", "show", thread, "--messages", "0", "--json")
     if code != 0:
-        return ""
+        return {}
 
-    return json.loads(out)["thread"].get("title") or ""
+    return json.loads(out)["thread"]
 
 
 async def ask_thread(call: Call, text: str) -> dict:
@@ -348,7 +349,7 @@ async def socket(request: web.Request) -> web.StreamResponse:
     call.socket = ws
     log("phone connected")
     touch(call)
-    await ws.send_json({"type": "hello", "title": call.title})
+    await ws.send_json({"type": "hello", "title": call.title, "link": call.link})
     await send_phase(call)
 
     while call.outbox:
@@ -444,11 +445,14 @@ async def main() -> None:
     die_with_parent()
     t3_pid, t3 = server
 
+    info = await thread_info(t3, args.thread)
+
     call = Call(
         t3=t3,
         t3_pid=t3_pid,
         thread=args.thread,
-        title=await thread_title(t3, args.thread),
+        title=info.get("title") or "",
+        link=info.get("link") or "",
         token=secrets.token_urlsafe(18),
         whisper=asyncio.create_task(asyncio.to_thread(load_whisper, args.model)),
     )

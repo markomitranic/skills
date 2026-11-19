@@ -37,7 +37,7 @@
   main {
     height: 100dvh;
     display: grid;
-    grid-template-rows: auto 1fr auto auto;
+    grid-template-rows: auto 1fr auto auto auto;
     padding: calc(env(safe-area-inset-top) + 40px) 24px calc(env(safe-area-inset-bottom) + 28px);
     max-width: 480px;
     margin: 0 auto;
@@ -167,6 +167,20 @@
   button.toggled { background: var(--button-active); color: var(--bg); }
   button:disabled { opacity: 0.4; }
 
+  .back {
+    justify-self: center;
+    margin-top: 22px;
+    padding: 8px 12px;
+    color: var(--muted);
+    font-size: 14px;
+    text-decoration: underline;
+    text-decoration-color: var(--faint);
+    text-underline-offset: 4px;
+    transition: color 150ms ease, text-decoration-color 150ms ease;
+  }
+
+  .back:active { color: var(--fg); text-decoration-color: var(--muted); }
+
   [hidden] { display: none !important; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -224,6 +238,8 @@
       End
     </div>
   </nav>
+
+  <a class="back" id="back" target="_blank" rel="noopener" hidden>Back to T3 Code</a>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js"></script>
@@ -509,6 +525,7 @@ function handle(event) {
   switch (event.type) {
     case "hello":
       if (event.title) $("title").textContent = event.title
+      if (event.link) { $("back").href = event.link; $("back").hidden = false }
       break
     case "phase":
       state.phase = event.phase
